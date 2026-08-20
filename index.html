@@ -884,12 +884,6 @@ function renderChart(rows, useMeasuredDepth, useMeasuredFreezing){
   const labels = rows.map(r => r.date);
   const remainingLabel = useMeasuredDepth ? "Neige au sol (mesurée)" : "Neige au sol (estimée)";
   const freezingLabel = useMeasuredFreezing ? "Isotherme 0°C" : "Isotherme 0°C (estimée)";
-  
-  // Altitude de la ville pour ligne de référence
-  const cityAlt = (currentCity.elevation !== null && currentCity.elevation !== undefined && !isNaN(currentCity.elevation))
-    ? currentCity.elevation : null;
-  const cityAltData = cityAlt && seriesVisibility.freezing ? rows.map(() => cityAlt) : rows.map(() => null);
-  
   if(chart) chart.destroy();
   chart = new Chart(ctx, {
     data: {
@@ -899,7 +893,6 @@ function renderChart(rows, useMeasuredDepth, useMeasuredFreezing){
         { type:"bar", label:remainingLabel, data: rows.map(r=>r.remaining), backgroundColor: PALETTE.cumul, borderRadius:2, yAxisID:"y1", order:2, hidden: !seriesVisibility.remaining },
         { type:"line", label:"Température maximale", data: rows.map(r=>r.max), borderColor: PALETTE.cold, backgroundColor: PALETTE.cold, pointRadius:0, borderWidth:1.3, borderDash:[3,3], tension:0.3, yAxisID:"y2", order:3, hidden: !seriesVisibility.temp },
         { type:"line", label:freezingLabel, data: rows.map(r=>r.freezingLevel), borderColor: PALETTE.freezing, backgroundColor: PALETTE.freezing, pointRadius:0, borderWidth:1.5, borderDash:[6,3], tension:0.2, yAxisID:"y3", order:4, hidden: !seriesVisibility.freezing, spanGaps:true },
-        { type:"line", label:`Altitude du lieu (${cityAlt} m)`, data: cityAltData, borderColor: "#c9a6ff", backgroundColor: "#c9a6ff", pointRadius:0, borderWidth:1, borderDash:[2,2], tension:0, yAxisID:"y3", order:5, hidden: !seriesVisibility.freezing || !cityAlt, spanGaps:false },
       ],
     },
     options: {
@@ -980,8 +973,7 @@ function renderStats(rows, start, end, useMeasuredDepth, useMeasuredFreezing){
   let freezingSub;
   if(cityAlt !== null && freezingRows.length){
     const aboveCount = freezingRows.filter(r => r.freezingLevel > cityAlt).length;
-    const belowCount = freezingRows.filter(r => r.freezingLevel <= cityAlt).length;
-    freezingSub = `au-dessus ${aboveCount}j · au-dessous/égal ${belowCount}j (pluie) — sur ${freezingRows.length}j`;
+    freezingSub = `au-dessus de ${cityAlt} m (altitude du lieu) ${aboveCount}/${freezingRows.length} j — risque de pluie`;
   } else {
     freezingSub = "altitude où la température atteint 0°C";
   }
