@@ -1075,7 +1075,7 @@ function renderStats(rows, start, end, useMeasuredDepth, useMeasuredFreezing){
 document.getElementById("refresh-btn").addEventListener("click", loadAndRender);
 
 // ---------- Bascule d'affichage des séries du graphique ----------
-const SERIES_INDEX = { snow:0, remaining:1, temp:2, tempMin:3, freezing:4 };
+const SERIES_INDEX = { snow:0, remaining:1, temp:2, tempMin:3, freezing:5 };
 document.querySelectorAll("#legend-row .legend-item").forEach(el => {
   el.title = "Cliquer pour afficher/masquer cette série";
   el.addEventListener("click", () => {
@@ -1083,7 +1083,14 @@ document.querySelectorAll("#legend-row .legend-item").forEach(el => {
     seriesVisibility[key] = !seriesVisibility[key];
     el.classList.toggle("legend-off", !seriesVisibility[key]);
     if(chart){
-      chart.setDatasetVisibility(SERIES_INDEX[key], seriesVisibility[key]);
+      if(key === "temp"){
+        // Masquer/afficher temp max (2), temp min (3), et référence 0°C (4) ensemble
+        chart.setDatasetVisibility(2, seriesVisibility[key]);
+        chart.setDatasetVisibility(3, seriesVisibility[key]);
+        chart.setDatasetVisibility(4, seriesVisibility[key]);
+      } else if(SERIES_INDEX[key] !== undefined){
+        chart.setDatasetVisibility(SERIES_INDEX[key], seriesVisibility[key]);
+      }
       if(key === "freezing" && chart.options.scales.y3){
         chart.options.scales.y3.display = seriesVisibility.freezing;
       }
