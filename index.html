@@ -891,6 +891,9 @@ function renderChart(rows, useMeasuredDepth, useMeasuredFreezing){
     ? currentCity.elevation : null;
   const cityAltData = cityAlt && seriesVisibility.freezing ? rows.map(() => cityAlt) : rows.map(() => null);
   
+  // Données de référence pour 0°C
+  const zeroTempData = seriesVisibility.temp ? rows.map(() => 0) : rows.map(() => null);
+  
   if(chart) chart.destroy();
   chart = new Chart(ctx, {
     data: {
@@ -900,8 +903,9 @@ function renderChart(rows, useMeasuredDepth, useMeasuredFreezing){
         { type:"bar", label:remainingLabel, data: rows.map(r=>r.remaining), backgroundColor: PALETTE.cumul, borderRadius:2, yAxisID:"y1", order:2, hidden: !seriesVisibility.remaining },
         { type:"line", label:"Température maximale", data: rows.map(r=>r.max), borderColor: PALETTE.cold, backgroundColor: PALETTE.cold, pointRadius:0, borderWidth:1.3, borderDash:[3,3], tension:0.3, yAxisID:"y2", order:3, hidden: !seriesVisibility.temp },
         { type:"line", label:"Température minimale", data: rows.map(r=>r.min), borderColor: "#4a90e2", backgroundColor: "#4a90e2", pointRadius:0, borderWidth:2, borderDash:[8,4], tension:0.3, yAxisID:"y2", order:3, hidden: !seriesVisibility.temp },
-        { type:"line", label:freezingLabel, data: rows.map(r=>r.freezingLevel), borderColor: PALETTE.freezing, backgroundColor: PALETTE.freezing, pointRadius:0, borderWidth:1.5, borderDash:[6,3], tension:0.2, yAxisID:"y3", order:4, hidden: !seriesVisibility.freezing, spanGaps:true },
-        { type:"line", label:`Altitude du lieu (${cityAlt} m)`, data: cityAltData, borderColor: "#c9a6ff", backgroundColor: "#c9a6ff", pointRadius:0, borderWidth:1, borderDash:[2,2], tension:0, yAxisID:"y3", order:5, hidden: !seriesVisibility.freezing || !cityAlt, spanGaps:false },
+        { type:"line", label:"Référence 0°C", data: zeroTempData, borderColor: "#7ec8e3", backgroundColor: "#7ec8e3", pointRadius:0, borderWidth:1, borderDash:[4,2], tension:0, yAxisID:"y2", order:4, hidden: !seriesVisibility.temp, spanGaps:false },
+        { type:"line", label:freezingLabel, data: rows.map(r=>r.freezingLevel), borderColor: PALETTE.freezing, backgroundColor: PALETTE.freezing, pointRadius:0, borderWidth:1.5, borderDash:[6,3], tension:0.2, yAxisID:"y3", order:5, hidden: !seriesVisibility.freezing, spanGaps:true },
+        { type:"line", label:`Altitude du lieu (${cityAlt} m)`, data: cityAltData, borderColor: "#c9a6ff", backgroundColor: "#c9a6ff", pointRadius:0, borderWidth:1, borderDash:[2,2], tension:0, yAxisID:"y3", order:6, hidden: !seriesVisibility.freezing || !cityAlt, spanGaps:false },
       ],
     },
     options: {
