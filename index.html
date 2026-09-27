@@ -283,15 +283,103 @@
     .signature{right:12px; bottom:12px;}
     .signature-label{display:none;}
   }
+
+  .header-top-row{
+    display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;
+  }
+  .header-top-row .eyebrow{margin-bottom:0;}
+  .lang-switch{
+    display:flex; gap:4px; background:var(--bg-input); border:1px solid var(--hairline);
+    border-radius:8px; padding:3px;
+  }
+  .lang-btn{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; font-weight:600; letter-spacing:.04em;
+    color:var(--text-lo); background:transparent; border:none; border-radius:6px;
+    padding:5px 10px; cursor:pointer; transition:background .15s, color .15s;
+  }
+  .lang-btn:hover{color:var(--text-hi);}
+  .lang-btn.active{background:var(--live); color:#07121d;}
+  .switches-row{display:flex; gap:8px;}
+
+  .current-city-pop{font-family:'IBM Plex Mono', monospace; font-size:11.5px; color:var(--text-lo); margin-top:4px; cursor:help;}
+  .current-city-pop:empty{display:none;}
+  .current-city-pop b{color:var(--text-hi); font-weight:500;}
+  .js-tooltip{
+    position:fixed; z-index:9999; max-width:280px; white-space:pre-line;
+    background:var(--bg-card); border:1px solid var(--hairline); color:var(--text-hi);
+    font-family:'IBM Plex Mono', monospace; font-size:11.5px; line-height:1.45;
+    padding:8px 10px; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,.45);
+    pointer-events:none;
+  }
+
+  .bulletin{
+    background:var(--bg-panel); border:1px solid var(--hairline); border-radius:16px;
+    padding:20px 22px 22px; margin-top:22px;
+  }
+  .bulletin:empty{display:none;}
+  .bulletin-header{
+    font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--live); margin-bottom:10px; display:flex; align-items:center; gap:8px;
+  }
+  .bulletin-summary{ font-size:14.5px; line-height:1.65; color:var(--text-hi); max-width:70ch; }
+  .bulletin-alerts{ display:flex; flex-direction:column; gap:8px; margin-top:14px; }
+  .bulletin-alert{
+    display:flex; align-items:center; gap:10px;
+    font-family:'IBM Plex Mono', monospace; font-size:12.5px; line-height:1.4;
+    padding:10px 12px; border-radius:10px; border:1px solid var(--hairline);
+    background:rgba(255,255,255,0.02);
+  }
+  .bulletin-alert-icon{font-size:16px; flex:none;}
+  .bulletin-alert-neige{ border-color:rgba(255,200,87,.45); color:#ffe2a3; background:rgba(255,200,87,.08); }
+  .bulletin-alert-gel{ border-color:rgba(72,202,228,.4); color:#a8e8f7; background:rgba(72,202,228,.08); }
+  .bulletin-alert-pluie{ border-color:rgba(76,127,168,.5); color:#b9d3ea; background:rgba(76,127,168,.12); }
+  .bulletin-alert-vent{ border-color:rgba(131,160,184,.4); color:var(--text-lo); background:rgba(131,160,184,.1); }
+
+  .features-panel{ margin-top:22px; }
+  .features-panel details{
+    background:var(--bg-panel); border:1px solid var(--hairline); border-radius:16px;
+    padding:4px 22px;
+  }
+  .features-panel summary{
+    cursor:pointer; padding:15px 0; font-family:'Space Grotesk', sans-serif; font-size:15px; font-weight:500;
+    color:var(--text-hi); list-style:none; display:flex; align-items:center; gap:9px; user-select:none;
+  }
+  .features-panel summary::-webkit-details-marker{display:none;}
+  .features-panel summary::before{
+    content:"▸"; color:var(--live); font-size:13px; transition:transform .15s ease; display:inline-block;
+  }
+  .features-panel details[open] summary::before{transform:rotate(90deg);}
+  .features-panel .features-body{padding:2px 0 20px;}
+  .features-panel h3{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--live); margin:18px 0 8px;
+  }
+  .features-panel h3:first-child{margin-top:4px;}
+  .features-panel ul{margin:0; padding-left:20px; font-size:13.5px; line-height:1.7; color:var(--text-hi);}
+  .features-panel li{margin-bottom:4px;}
+  .features-panel li b{color:var(--text-hi); font-weight:600;}
+  .features-panel .f-dim{color:var(--text-lo);}
 </style>
 </head>
 <body>
 <div class="wrap">
 
   <header>
-    <div class="eyebrow"><span class="pulse"></span> relevé climatique — open-meteo</div>
-    <h1>Historique des Chutes de Neige pour 1 site</h1>
-    <div class="subtitle">Choisis une ville (ou une station de ski) et une période : le graphique retrace les chutes de neige quotidiennes et ce qu'il en reste réellement au sol, une fois la fonte prise en compte.</div>
+    <div class="header-top-row">
+      <div class="eyebrow" id="eyebrow"><span class="pulse"></span> relevé climatique — open-meteo</div>
+      <div class="switches-row">
+        <div class="lang-switch">
+          <button class="lang-btn" data-lang="fr">FR</button>
+          <button class="lang-btn" data-lang="en">EN</button>
+        </div>
+        <div class="lang-switch" id="unit-switch">
+          <button class="lang-btn" data-unit="C">°C</button>
+          <button class="lang-btn" data-unit="F">°F</button>
+        </div>
+      </div>
+    </div>
+    <h1 id="page-title">Historique des Chutes de Neige pour 1 site</h1>
+    <div class="subtitle" id="page-subtitle">Choisis une ville (ou une station de ski) et une période : le graphique retrace les chutes de neige quotidiennes et ce qu'il en reste réellement au sol, une fois la fonte prise en compte.</div>
   </header>
 
   <div class="search-panel">
@@ -309,8 +397,8 @@
   <div class="altitude-prompt" id="altitude-prompt">
     <div class="altitude-prompt-header">
       <div class="altitude-prompt-text">
-        Altitude précise pour <b id="altitude-city-name"></b>
-        <span class="altitude-prompt-sub">(optionnel, mais conseillé pour la neige — corrige les chutes de neige et la température pour un point en altitude, ex : station de ski, sommet)</span>
+        <span id="altitude-prompt-prefix">Altitude précise pour</span> <b id="altitude-city-name"></b>
+        <span class="altitude-prompt-sub" id="altitude-prompt-sub">(optionnel, mais conseillé pour la neige — corrige les chutes de neige et la température pour un point en altitude, ex : station de ski, sommet)</span>
       </div>
       <button class="altitude-close-btn" id="altitude-close-btn" aria-label="Fermer">×</button>
     </div>
@@ -327,6 +415,7 @@
     <div>
       <div class="current-city-name" id="current-city-name">Fontcouverte-la-Toussuire</div>
       <div class="current-city-region" id="current-city-region">Auvergne-Rhône-Alpes, France</div>
+      <div class="current-city-pop" id="current-city-pop"></div>
     </div>
     <div class="current-city-right">
       <span class="current-city-altitude" id="current-city-altitude"></span>
@@ -336,7 +425,7 @@
   </div>
 
   <div class="period-panel">
-    <div class="period-label">Période</div>
+    <div class="period-label" id="period-label">Période</div>
     <div class="period-chips" id="period-chips">
       <button class="period-chip" data-preset="7">7 jours</button>
       <button class="period-chip active" data-preset="30">30 jours</button>
@@ -346,7 +435,7 @@
     </div>
     <div class="custom-range" id="custom-range" style="display:none;">
       <div class="date-group">
-        <label>Du</label>
+        <label id="date-from-label">Du</label>
         <div class="date-selects">
           <select class="sel-day" id="start-day"></select>
           <select class="sel-month" id="start-month"></select>
@@ -354,7 +443,7 @@
         </div>
       </div>
       <div class="date-group">
-        <label>Au</label>
+        <label id="date-to-label">Au</label>
         <div class="date-selects">
           <select class="sel-day" id="end-day"></select>
           <select class="sel-month" id="end-month"></select>
@@ -374,7 +463,7 @@
 
   <div class="gauge-panel" id="gauge-panel" style="display:none;">
     <div class="gauge-top">
-      <span class="gauge-title">Intensité des chutes (jours enneigés)</span>
+      <span class="gauge-title" id="gauge-title">Intensité des chutes (jours enneigés)</span>
       <span class="gauge-range" id="gauge-dates"></span>
     </div>
     <div class="gauge-track">
@@ -393,20 +482,24 @@
       <canvas id="snowChart"></canvas>
     </div>
     <div class="legend-row" id="legend-row">
-      <span class="legend-item" data-key="snow"><span class="legend-dot" style="background:var(--gold)"></span>Neige du jour (cm)</span>
-      <span class="legend-item" data-key="remaining"><span class="legend-dot" style="background:var(--live)"></span>Neige au sol restante (cm)</span>
-      <span class="legend-item" data-key="temp"><span class="legend-dot" style="background:var(--danger)"></span>Température maximale (°)</span>
-      <span class="legend-item" data-key="tempMin"><span class="legend-dot" style="background:#4a90e2"></span>Température minimale (°)</span>
-      <span class="legend-item" data-key="freezing"><span class="legend-dot" style="background:#c9a6ff"></span>Isotherme 0°C (m)</span>
+      <span class="legend-item" data-key="snow"><span class="legend-dot" style="background:var(--gold)"></span><span class="legend-text">Neige du jour (cm)</span></span>
+      <span class="legend-item" data-key="remaining"><span class="legend-dot" style="background:var(--live)"></span><span class="legend-text">Neige au sol restante (cm)</span></span>
+      <span class="legend-item" data-key="temp"><span class="legend-dot" style="background:var(--danger)"></span><span class="legend-text">Température maximale (°C)</span></span>
+      <span class="legend-item" data-key="tempMin"><span class="legend-dot" style="background:#4a90e2"></span><span class="legend-text">Température minimale (°C)</span></span>
+      <span class="legend-item" data-key="freezing"><span class="legend-dot" style="background:#c9a6ff"></span><span class="legend-text">Isotherme 0°C (m)</span></span>
     </div>
   </div>
 
+  <div class="bulletin" id="bulletin-period"></div>
+
   <div class="cards" id="cards"></div>
 
+  <div class="features-panel" id="features-panel"></div>
+
   <footer>
-    Source : archives climatiques Open-Meteo (ERA5, géocodage sans clé API) · Fuseau horaire local à la ville<br>
-    Le lien partagé conserve ta ville et ta période
-    <div class="tip">
+    <span id="footer-source-line">Source : archives climatiques Open-Meteo (ERA5, géocodage sans clé API) · Fuseau horaire local à la ville<br>
+    Le lien partagé conserve ta ville et ta période</span>
+    <div class="tip" id="footer-tip">
       💡 Astuce — <b>« Neige au sol restante »</b> tient compte de la fonte : quand une mesure ERA5-Land
       de hauteur de neige est disponible pour la zone, elle est utilisée directement ; sinon un modèle simplifié
       « degré-jour » est appliqué (la neige accumulée fond dès que la température maximale du jour dépasse 0°C).
@@ -426,11 +519,245 @@
 <script>
 const PALETTE = { snow:"#ffc857", cumul:"#8fe3ff", cold:"#e76f51", freezing:"#c9a6ff" };
 const LAG_DAYS = 5; // délai de consolidation des archives climatiques Open-Meteo
+const JOUR_NEIGEUX_CM = 0.1;   // cm — seuil d'un « jour avec neige »
+const FORTE_CHUTE_CM = 20;     // cm — seuil d'une « forte chute » en une journée
+const PLUIE_SEUIL_MM = 1;      // mm — précipitations sans neige = jour de pluie
+const GEL_SEUIL = 0;           // °C
+
+// ---------- Traductions ----------
+const TRANSLATIONS = {
+  fr: {
+    locale: "fr-FR",
+    eyebrow: "relevé climatique — open-meteo",
+    title: "Historique des Chutes de Neige pour 1 site",
+    subtitle: "Choisis une ville (ou une station de ski) et une période : le graphique retrace les chutes de neige quotidiennes et ce qu'il en reste réellement au sol, une fois la fonte prise en compte.",
+    searchPlaceholder: "Rechercher une ville ou station (ex : Chamonix, Sapporo, Québec…)",
+    searchLoading: "recherche…",
+    searchNoResults: (q) => `Aucune ville trouvée pour « ${q} ».`,
+    searchError: "Recherche indisponible pour le moment.",
+    altitudePromptPrefix: "Altitude précise pour",
+    altitudePromptSub: "(optionnel, mais conseillé pour la neige — corrige les chutes de neige et la température pour un point en altitude, ex : station de ski, sommet)",
+    altitudeClose: "Fermer",
+    altitudePlaceholder: "Altitude en mètres (ex : 1800)",
+    altitudeSkip: "Continuer sans préciser",
+    altitudeConfirm: "Valider",
+    altitudeModelNote: (m) => `Altitude retenue par le modèle climatique pour ce point : ${m} m.`,
+    altitudeFeedbackError: "Indique une altitude en mètres, ou clique « Continuer sans préciser ».",
+    altitudeFeedbackApplied: (m) => `Altitude de ${m} m appliquée aux calculs.`,
+    altitudeBadge: (m) => `⛰ ${m} m (précisée)`,
+    altEditBtn: "⛰ Altitude",
+    periodLabel: "Période",
+    period7: "7 jours", period30: "30 jours", period90: "3 mois", period365: "1 an", periodCustom: "Personnalisé",
+    dateFrom: "Du", dateTo: "Au",
+    months: ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"],
+    compassDirs: ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSO","SO","OSO","O","ONO","NO","NNO"],
+    shareBtn: "🔗 Copier le lien",
+    shareCopied: "✓ Lien copié",
+    sharePrompt: "Copie ce lien :",
+    refreshBtn: "↻ Actualiser",
+    updatedAt: (time) => `mis à jour à ${time}`,
+    gaugeTitle: "Intensité des chutes (jours enneigés)",
+    gaugeAvg: (v) => `${v} cm/j neigeux`,
+    gaugeAltitude: (m) => ` · altitude ${m} m`,
+    chartStatusDefault: "Recherche une ville pour démarrer.",
+    chartStatusLoading: (city) => `Chargement des relevés pour ${city}…`,
+    chartStatusInvalidPeriod: "Choisis une période valide (date de début avant la date de fin).",
+    chartStatusNoData: "Aucune donnée disponible pour cette période.",
+    chartStatusNoUsableData: "Aucune donnée exploitable pour cette période.",
+    chartStatusError: (msg) => `Impossible de charger les données (${msg})`,
+    legendSnow: "Neige du jour (cm)",
+    legendRemaining: "Neige au sol restante (cm)",
+    legendTempMax: (u) => `Température maximale (${u})`,
+    legendTempMin: (u) => `Température minimale (${u})`,
+    legendFreezing: "Isotherme 0°C (m)",
+    legendToggleTitle: "Cliquer pour afficher/masquer cette série",
+    dsSnow: "Neige du jour",
+    dsRemainingMeasured: "Neige au sol (mesurée)",
+    dsRemainingEstimated: "Neige au sol (estimée)",
+    dsTempMax: "Température maximale",
+    dsTempMin: "Température minimale",
+    dsZeroRef: (u) => `Référence 0°C (${u})`,
+    dsFreezingMeasured: "Isotherme 0°C",
+    dsFreezingEstimated: "Isotherme 0°C (estimée)",
+    dsCityAlt: (m) => `Altitude du lieu (${m} m)`,
+    axisSnow: "Neige du jour (cm)",
+    axisRemaining: "Neige au sol (cm)",
+    axisFreezing: "Isotherme 0°C (m)",
+    footerSource: "Source : archives climatiques Open-Meteo (ERA5, géocodage sans clé API) · Fuseau horaire local à la ville",
+    footerShareNote: "Le lien partagé conserve ta ville et ta période",
+    footerTip: "💡 Astuce — <b>« Neige au sol restante »</b> tient compte de la fonte : quand une mesure ERA5-Land de hauteur de neige est disponible pour la zone, elle est utilisée directement ; sinon un modèle simplifié « degré-jour » est appliqué (la neige accumulée fond dès que la température maximale du jour dépasse 0°C). C'est donc une estimation, pas une mesure au centimètre près. Les données récentes sont aussi consolidées avec quelques jours de délai (source ERA5). Le bouton <b>⛰ Altitude</b> reste essentiel : la neige tient rarement à l'altitude par défaut d'une ville de vallée — précise l'altitude d'une station ou d'un sommet pour recalculer chutes et fonte à ce point précis.",
+    // Cartes
+    cardRemaining: "Neige au sol restante (fin de période)",
+    srcMeasured: "mesure ERA5-Land",
+    srcEstimated: "estimation (modèle degré-jour, fonte dès que T° max > 0°C)",
+    cardFreezing: "Isotherme 0°C (moyenne)",
+    freezingSrcMeasured: "mesure horaire ERA5",
+    freezingSrcEstimated: "estimation (gradient standard 0,65°C/100 m)",
+    freezingSubAlt: (above, below, n) => `au-dessus ${above}j · au-dessous/égal ${below}j (pluie) — sur ${n}j`,
+    freezingSubDefault: "altitude où la température atteint 0°C",
+    cardSnowiest: "Journée la plus enneigée",
+    cardMinTemp: "🌡️ mini",
+    cardWind: "💨 vent",
+    cardColdest: "Journée la plus froide",
+    cardSnowThatDay: "❄️ neige ce jour-là",
+    cardTotal: "Cumul brut des chutes",
+    cardTotalSub: (n) => `avant fonte, sur ${n} jour${n>1?"s":""}`,
+    cardSnowDays: "Jours avec neige",
+    cardSnowDaysSub: (n, pct) => `sur ${n} jour${n>1?"s":""} observés (${pct}%)`,
+    cardAvgPerDay: "Neige par jour neigeux (moy.)",
+    cardAvgPerDaySub: (s) => `jours avec ≥ ${s} cm`,
+    // Bulletin
+    periodTextPreset7: "sur les 7 derniers jours",
+    periodTextPreset30: "sur les 30 derniers jours",
+    periodTextPreset90: "sur les 3 derniers mois",
+    periodTextPreset365: "sur les 12 derniers mois",
+    periodTextCustom: (s, e) => `du ${s} au ${e}`,
+    periodDays: (n) => `soit ${n.toLocaleString("fr-FR")} jour${n>1?"s":""}`,
+    bulletinHeader: (label) => `📅 bulletin — ${label}`,
+    bulletinSnow: (city, total, label, days, pct) => `${city} a reçu ${total} cm de neige (cumul brut, avant fonte) ${label}, répartis sur ${days} jour${days>1?"s":""} neigeux (${pct} %).`,
+    bulletinNoSnow: (city, label) => `Aucune chute de neige notable à ${city} ${label}.`,
+    bulletinPeak: (cm, date) => ` La plus forte chute a atteint ${cm} cm le ${date}.`,
+    bulletinGround: (cm, measured) => ` Neige au sol en fin de période : ${cm} cm (${measured ? "mesurée" : "estimée"}).`,
+    bulletinTemps: (min, max, u) => ` Températures relevées entre ${min}${u} et ${max}${u}.`,
+    alertHeavy: (n, s, label) => `${n} jour${n>1?"s":""} de fortes chutes (≥ ${s} cm en une journée) ${label}.`,
+    alertGel: (n, g, u, label) => `${n} jour${n>1?"s":""} de gel (mini ≤ ${g}${u}) ${label}.`,
+    alertRain: (n, label) => `${n} jour${n>1?"s":""} de pluie (précipitations sans neige) ${label} — la neige au sol a pu être lessivée.`,
+    alertNoSnow: (label) => `Aucun jour de neige ${label} : précise l'altitude d'une station (⛰ Altitude) si le lieu est en vallée.`,
+    // Population
+    popCity: (n) => `Ville : <b>${n}</b> hab.`,
+    popUrban: (n) => `Agglomération : <b>${n}</b> hab.`,
+    popTitleFr: (commune, popC, epci, popE) => `Commune de ${commune} : ${popC} hab. (INSEE)` + (epci ? `\nAgglomération = intercommunalité ${epci} : ${popE} hab. (INSEE)` : ""),
+    popTitleWorld: (nom, popC) => `Population de ${nom} : ${popC} hab. (Open-Meteo / GeoNames) — agglomération disponible pour la France uniquement`,
+  },
+  en: {
+    locale: "en-US",
+    eyebrow: "climate record — open-meteo",
+    title: "Snowfall history for one location",
+    subtitle: "Pick a town (or a ski resort) and a period: the chart traces daily snowfall and how much actually remains on the ground once melting is taken into account.",
+    searchPlaceholder: "Search a town or resort (e.g. Chamonix, Sapporo, Québec…)",
+    searchLoading: "searching…",
+    searchNoResults: (q) => `No town found for “${q}”.`,
+    searchError: "Search unavailable right now.",
+    altitudePromptPrefix: "Precise altitude for",
+    altitudePromptSub: "(optional, but recommended for snow — corrects snowfall and temperature for a high point, e.g. ski resort, summit)",
+    altitudeClose: "Close",
+    altitudePlaceholder: "Altitude in metres (e.g. 1800)",
+    altitudeSkip: "Continue without",
+    altitudeConfirm: "Apply",
+    altitudeModelNote: (m) => `Altitude used by the climate model for this point: ${m} m.`,
+    altitudeFeedbackError: "Enter an altitude in metres, or click “Continue without”.",
+    altitudeFeedbackApplied: (m) => `Altitude of ${m} m applied to the calculations.`,
+    altitudeBadge: (m) => `⛰ ${m} m (set)`,
+    altEditBtn: "⛰ Altitude",
+    periodLabel: "Period",
+    period7: "7 days", period30: "30 days", period90: "3 months", period365: "1 year", periodCustom: "Custom",
+    dateFrom: "From", dateTo: "To",
+    months: ["January","February","March","April","May","June","July","August","September","October","November","December"],
+    compassDirs: ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"],
+    shareBtn: "🔗 Copy link",
+    shareCopied: "✓ Link copied",
+    sharePrompt: "Copy this link:",
+    refreshBtn: "↻ Refresh",
+    updatedAt: (time) => `updated at ${time}`,
+    gaugeTitle: "Snowfall intensity (snowy days)",
+    gaugeAvg: (v) => `${v} cm/snowy day`,
+    gaugeAltitude: (m) => ` · altitude ${m} m`,
+    chartStatusDefault: "Search a town to start.",
+    chartStatusLoading: (city) => `Loading records for ${city}…`,
+    chartStatusInvalidPeriod: "Pick a valid period (start date before end date).",
+    chartStatusNoData: "No data available for this period.",
+    chartStatusNoUsableData: "No usable data for this period.",
+    chartStatusError: (msg) => `Unable to load data (${msg})`,
+    legendSnow: "Daily snowfall (cm)",
+    legendRemaining: "Snow remaining on the ground (cm)",
+    legendTempMax: (u) => `Maximum temperature (${u})`,
+    legendTempMin: (u) => `Minimum temperature (${u})`,
+    legendFreezing: "0°C isotherm (m)",
+    legendToggleTitle: "Click to show/hide this series",
+    dsSnow: "Daily snowfall",
+    dsRemainingMeasured: "Snow on the ground (measured)",
+    dsRemainingEstimated: "Snow on the ground (estimated)",
+    dsTempMax: "Maximum temperature",
+    dsTempMin: "Minimum temperature",
+    dsZeroRef: (u) => `0°C reference (${u})`,
+    dsFreezingMeasured: "0°C isotherm",
+    dsFreezingEstimated: "0°C isotherm (estimated)",
+    dsCityAlt: (m) => `Location altitude (${m} m)`,
+    axisSnow: "Daily snowfall (cm)",
+    axisRemaining: "Snow on the ground (cm)",
+    axisFreezing: "0°C isotherm (m)",
+    footerSource: "Source: Open-Meteo climate archive (ERA5, keyless geocoding) · Local time zone of the location",
+    footerShareNote: "The shared link keeps your location and period",
+    footerTip: "💡 Tip — <b>“Snow remaining on the ground”</b> accounts for melting: when an ERA5-Land snow depth measurement is available for the area it is used directly; otherwise a simplified “degree-day” model is applied (accumulated snow melts as soon as the daily maximum exceeds 0°C). It is therefore an estimate, not a centimetre-accurate measurement. Recent data is also consolidated with a few days' delay (ERA5 source). The <b>⛰ Altitude</b> button is essential: snow rarely lasts at the default altitude of a valley town — set the altitude of a resort or summit to recompute snowfall and melting at that exact point.",
+    cardRemaining: "Snow remaining on the ground (end of period)",
+    srcMeasured: "ERA5-Land measurement",
+    srcEstimated: "estimate (degree-day model, melting once max T° > 0°C)",
+    cardFreezing: "0°C isotherm (average)",
+    freezingSrcMeasured: "hourly ERA5 measurement",
+    freezingSrcEstimated: "estimate (standard lapse rate 0.65°C/100 m)",
+    freezingSubAlt: (above, below, n) => `above ${above}d · below/equal ${below}d (rain) — over ${n}d`,
+    freezingSubDefault: "altitude where the temperature reaches 0°C",
+    cardSnowiest: "Snowiest day",
+    cardMinTemp: "🌡️ min",
+    cardWind: "💨 wind",
+    cardColdest: "Coldest day",
+    cardSnowThatDay: "❄️ snow that day",
+    cardTotal: "Total snowfall",
+    cardTotalSub: (n) => `before melting, over ${n} day${n>1?"s":""}`,
+    cardSnowDays: "Days with snow",
+    cardSnowDaysSub: (n, pct) => `out of ${n} observed day${n>1?"s":""} (${pct}%)`,
+    cardAvgPerDay: "Snow per snowy day (avg.)",
+    cardAvgPerDaySub: (s) => `days with ≥ ${s} cm`,
+    periodTextPreset7: "over the last 7 days",
+    periodTextPreset30: "over the last 30 days",
+    periodTextPreset90: "over the last 3 months",
+    periodTextPreset365: "over the last 12 months",
+    periodTextCustom: (s, e) => `from ${s} to ${e}`,
+    periodDays: (n) => `i.e. ${n.toLocaleString("en-US")} day${n>1?"s":""}`,
+    bulletinHeader: (label) => `📅 bulletin — ${label}`,
+    bulletinSnow: (city, total, label, days, pct) => `${city} received ${total} cm of snow (total, before melting) ${label}, spread over ${days} snowy day${days>1?"s":""} (${pct}%).`,
+    bulletinNoSnow: (city, label) => `No notable snowfall in ${city} ${label}.`,
+    bulletinPeak: (cm, date) => ` The heaviest snowfall reached ${cm} cm on ${date}.`,
+    bulletinGround: (cm, measured) => ` Snow on the ground at the end of the period: ${cm} cm (${measured ? "measured" : "estimated"}).`,
+    bulletinTemps: (min, max, u) => ` Temperatures ranged between ${min}${u} and ${max}${u}.`,
+    alertHeavy: (n, s, label) => `${n} day${n>1?"s":""} of heavy snowfall (≥ ${s} cm in one day) ${label}.`,
+    alertGel: (n, g, u, label) => `${n} frost day${n>1?"s":""} (min ≤ ${g}${u}) ${label}.`,
+    alertRain: (n, label) => `${n} rain day${n>1?"s":""} (precipitation without snow) ${label} — snow on the ground may have been washed away.`,
+    alertNoSnow: (label) => `No snow day ${label}: set a resort altitude (⛰ Altitude) if the location is in a valley.`,
+    popCity: (n) => `Town: <b>${n}</b> inh.`,
+    popUrban: (n) => `Urban area: <b>${n}</b> inh.`,
+    popTitleFr: (commune, popC, epci, popE) => `Town of ${commune}: ${popC} inh. (INSEE)` + (epci ? `\nUrban area = inter-municipal area ${epci}: ${popE} inh. (INSEE)` : ""),
+    popTitleWorld: (nom, popC) => `Population of ${nom}: ${popC} inh. (Open-Meteo / GeoNames) — urban area available for France only`,
+  },
+};
+
+function safeGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function safeSet(k, v){ try{ localStorage.setItem(k, v); }catch(e){} }
+
+let lang = safeGet("neige-lang") || (navigator.language && navigator.language.startsWith("en") ? "en" : "fr");
+let tempUnit = safeGet("neige-unit") || "C";
+
+function t(key, ...args){
+  const dict = TRANSLATIONS[lang] || TRANSLATIONS.fr;
+  const entry = dict[key] !== undefined ? dict[key] : TRANSLATIONS.fr[key];
+  return typeof entry === "function" ? entry(...args) : entry;
+}
+function loc(){ return t("locale"); }
+
+// ---------- Unité de température (°C / °F) ----------
+function convTemp(c){
+  if(c === null || c === undefined) return c;
+  return tempUnit === "F" ? (c * 9 / 5 + 32) : c;
+}
+function unitSuffix(){ return tempUnit === "F" ? "°F" : "°C"; }
+function fmtNum(n, digits){ return n.toLocaleString(loc(), { minimumFractionDigits: digits, maximumFractionDigits: digits }); }
+function fmtTemp(c){ return fmtNum(convTemp(c), 1) + unitSuffix(); }
 
 let currentCity = { name:"Fontcouverte-la-Toussuire", admin1:"Auvergne-Rhône-Alpes", country:"France", lat:45.2667, lon:6.3167, modelElevation:null, elevation:1800 };
 let periodPreset = "30";
 let chart;
 let debounceTimer;
+let lastRender = null; // dernières données chargées, pour redessiner sans recharger (langue / unité)
 const seriesVisibility = { snow:true, remaining:true, temp:true, tempMin:true, freezing:true };
 
 // ---------- URL state ----------
@@ -439,7 +766,8 @@ function todayMinusLag(){
   d.setDate(d.getDate() - LAG_DAYS);
   return d;
 }
-function isoDate(d){ return d.toISOString().slice(0,10); }
+// Date locale (pas UTC) : toISOString() décalait d'un jour en arrière en France
+function isoDate(d){ return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; }
 
 function encodeState(){
   const cs = getCustomISO("start");
@@ -459,10 +787,73 @@ function syncUrl(){
     url.searchParams.set("c", encodeState());
     window.history.replaceState({}, "", url.toString());
   }catch(e){
-    // Ouverture locale (content:// ou file://) : l'historique du navigateur
-    // n'accepte pas replaceState dans ce contexte. Le partage de lien
-    // fonctionnera pleinement une fois le site hébergé sur un domaine.
+    // Ouverture locale (content:// ou file://) : replaceState n'est pas accepté dans ce contexte.
   }
+}
+
+// ---------- Textes statiques ----------
+function setText(id, key, ...args){ const el = document.getElementById(id); if(el) el.textContent = t(key, ...args); }
+function applyStaticTranslations(){
+  document.documentElement.lang = lang;
+  document.title = t("title");
+  document.querySelectorAll(".lang-btn[data-lang]").forEach(b => b.classList.toggle("active", b.dataset.lang === lang));
+  document.querySelectorAll(".lang-btn[data-unit]").forEach(b => b.classList.toggle("active", b.dataset.unit === tempUnit));
+  document.getElementById("eyebrow").innerHTML = `<span class="pulse"></span> ${t("eyebrow")}`;
+  setText("page-title", "title");
+  setText("page-subtitle", "subtitle");
+  document.getElementById("search-input").placeholder = t("searchPlaceholder");
+  setText("search-loading", "searchLoading");
+  setText("altitude-prompt-prefix", "altitudePromptPrefix");
+  setText("altitude-prompt-sub", "altitudePromptSub");
+  document.getElementById("altitude-close-btn").setAttribute("aria-label", t("altitudeClose"));
+  document.getElementById("altitude-input").placeholder = t("altitudePlaceholder");
+  setText("altitude-skip-btn", "altitudeSkip");
+  setText("altitude-confirm-btn", "altitudeConfirm");
+  setText("alt-edit-btn", "altEditBtn");
+  setText("period-label", "periodLabel");
+  const chipKeys = { "7":"period7", "30":"period30", "90":"period90", "365":"period365", "custom":"periodCustom" };
+  periodChipsEl.querySelectorAll(".period-chip").forEach(c => { c.textContent = t(chipKeys[c.dataset.preset]); });
+  setText("date-from-label", "dateFrom");
+  setText("date-to-label", "dateTo");
+  refreshMonthOptions();
+  setText("share-btn", "shareBtn");
+  setText("refresh-btn", "refreshBtn");
+  setText("gauge-title", "gaugeTitle");
+  if(!lastRender && !chart) setText("chart-status", "chartStatusDefault");
+  const legendTexts = { snow: t("legendSnow"), remaining: t("legendRemaining"), temp: t("legendTempMax", unitSuffix()), tempMin: t("legendTempMin", unitSuffix()), freezing: t("legendFreezing") };
+  document.querySelectorAll("#legend-row .legend-item").forEach(el => {
+    el.querySelector(".legend-text").textContent = legendTexts[el.dataset.key];
+    el.title = t("legendToggleTitle");
+  });
+  document.getElementById("footer-source-line").innerHTML = `${t("footerSource")}<br>${t("footerShareNote")}`;
+  document.getElementById("footer-tip").innerHTML = t("footerTip");
+  renderFeatures();
+  renderCurrentCity();
+}
+
+function setLang(newLang){
+  if(newLang !== "fr" && newLang !== "en") return;
+  if(newLang === lang) return;
+  lang = newLang;
+  safeSet("neige-lang", lang);
+  applyStaticTranslations();
+  rerender();
+}
+function setTempUnit(newUnit){
+  if(newUnit !== "C" && newUnit !== "F") return;
+  if(newUnit === tempUnit) return;
+  tempUnit = newUnit;
+  safeSet("neige-unit", tempUnit);
+  applyStaticTranslations();
+  rerender();
+}
+function rerender(){
+  if(!lastRender) return;
+  const { rows, start, end, useMeasuredDepth, useMeasuredFreezing } = lastRender;
+  renderChart(rows, useMeasuredDepth, useMeasuredFreezing);
+  renderStats(rows, start, end, useMeasuredDepth, useMeasuredFreezing);
+  if(lastRender.updatedAt) document.getElementById("updated-at").textContent =
+    t("updatedAt", lastRender.updatedAt.toLocaleTimeString(loc(), {hour:"2-digit", minute:"2-digit"}));
 }
 
 // ---------- Geocoding search ----------
@@ -487,19 +878,21 @@ document.addEventListener("click", (e) => {
   }
 });
 
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c])); }
+
 async function runSearch(q){
   try{
-    const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=fr&format=json`);
+    const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=${lang}&format=json`);
     const data = await res.json();
     loadingEl.style.display = "none";
     const list = data.results || [];
     if(!list.length){
-      resultsEl.innerHTML = `<div class="result-empty">Aucune ville trouvée pour « ${q} ».</div>`;
+      resultsEl.innerHTML = `<div class="result-empty">${escapeHtml(t("searchNoResults", q))}</div>`;
     } else {
       resultsEl.innerHTML = list.map((r,i) => `
         <div class="result-item" data-index="${i}">
-          <span class="result-name">${r.name}</span>
-          <span class="result-region">${[r.admin1, r.country].filter(Boolean).join(", ")}</span>
+          <span class="result-name">${escapeHtml(r.name)}</span>
+          <span class="result-region">${escapeHtml([r.admin1, r.country].filter(Boolean).join(", "))}</span>
         </div>
       `).join("");
       resultsEl.querySelectorAll(".result-item").forEach((el, i) => {
@@ -509,7 +902,7 @@ async function runSearch(q){
     resultsEl.style.display = "block";
   }catch(e){
     loadingEl.style.display = "none";
-    resultsEl.innerHTML = `<div class="result-empty">Recherche indisponible pour le moment.</div>`;
+    resultsEl.innerHTML = `<div class="result-empty">${t("searchError")}</div>`;
     resultsEl.style.display = "block";
   }
 }
@@ -529,17 +922,130 @@ function selectCity(r){
 }
 
 function renderCurrentCity(){
+  renderPopulation();
   document.getElementById("current-city-name").textContent = currentCity.name;
   document.getElementById("current-city-region").textContent = [currentCity.admin1, currentCity.country].filter(Boolean).join(", ");
   document.getElementById("current-city-coords").textContent = `${currentCity.lat.toFixed(2)}°, ${currentCity.lon.toFixed(2)}°`;
   const badge = document.getElementById("current-city-altitude");
   if(currentCity.elevation !== null && currentCity.elevation !== undefined){
-    badge.textContent = `⛰ ${currentCity.elevation} m (précisée)`;
+    badge.textContent = t("altitudeBadge", currentCity.elevation);
     badge.style.display = "inline-flex";
   } else {
     badge.style.display = "none";
   }
 }
+
+// ---------- Population de la ville et de l'agglomération ----------
+// France : commune + intercommunalité (EPCI) via geo.api.gouv.fr — hors France : Open-Meteo Geocoding (GeoNames)
+const populationCache = {};
+function getCityPopulation(city){
+  const key = city.lat + "," + city.lon + "," + city.name;
+  if(populationCache[key]) return populationCache[key];
+  const p = (async () => {
+    try{
+      let c = null;
+      // a) par le nom (les coordonnées peuvent tomber dans une commune voisine), si proche des coordonnées
+      const rn = await fetch(`https://geo.api.gouv.fr/communes?nom=${encodeURIComponent(city.name)}&fields=nom,population,codeEpci,centre&limit=5`);
+      if(rn.ok){
+        const list = await rn.json();
+        c = list.find(x => x.centre && (x.centre.coordinates[1] - city.lat) ** 2 + (x.centre.coordinates[0] - city.lon) ** 2 < 0.04) || null; // < ~20 km
+      }
+      // b) sinon par les coordonnées (tableau vide hors France)
+      if(!c){
+        const res = await fetch(`https://geo.api.gouv.fr/communes?lat=${city.lat}&lon=${city.lon}&fields=nom,population,codeEpci`);
+        if(res.ok) [c] = await res.json();
+      }
+      if(c && c.population){
+        let epci = null;
+        if(c.codeEpci){
+          const r2 = await fetch(`https://geo.api.gouv.fr/epcis/${c.codeEpci}?fields=nom,population`);
+          if(r2.ok){
+            const e = await r2.json();
+            if(e && e.population) epci = { nom: e.nom, pop: e.population };
+          }
+        }
+        return { source: "fr", commune: { nom: c.nom, pop: c.population }, epci };
+      }
+    }catch(err){}
+    // Hors France : résultat Open-Meteo le plus proche des coordonnées
+    const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city.name)}&count=10&language=${lang}&format=json`);
+    if(!res.ok) return null;
+    const data = await res.json();
+    const cands = (data.results || []).filter(r => r.population);
+    if(!cands.length) return null;
+    const d2 = r => (r.latitude - city.lat) ** 2 + (r.longitude - city.lon) ** 2;
+    const best = cands.reduce((a, b) => d2(b) < d2(a) ? b : a);
+    if(d2(best) > 0.25) return null; // > ~50 km : pas la bonne ville
+    return { source: "world", commune: { nom: best.name, pop: best.population }, epci: null };
+  })();
+  populationCache[key] = p;
+  p.catch(() => delete populationCache[key]);
+  return p;
+}
+function formatPop(n){
+  return new Intl.NumberFormat(lang === "en" ? "en" : "fr", { notation: "compact", maximumFractionDigits: 1 }).format(n);
+}
+function formatPopExact(n){ return n.toLocaleString(loc()); }
+let popRequestKey = null;
+function renderPopulation(){
+  const el = document.getElementById("current-city-pop");
+  if(!el) return;
+  const city = currentCity;
+  const key = city.lat + "," + city.lon + "," + city.name;
+  if(popRequestKey !== key){ el.innerHTML = ""; el.title = ""; }
+  popRequestKey = key;
+  getCityPopulation(city).then(info => {
+    if(popRequestKey !== key) return; // une autre ville a été choisie entre-temps
+    if(!info){ el.innerHTML = ""; el.title = ""; return; }
+    const parts = [t("popCity", formatPop(info.commune.pop))];
+    if(info.epci && info.epci.pop !== info.commune.pop) parts.push(t("popUrban", formatPop(info.epci.pop)));
+    el.innerHTML = "👥 " + parts.join(" · ");
+    el.title = info.source === "fr"
+      ? t("popTitleFr", info.commune.nom, formatPopExact(info.commune.pop), info.epci && info.epci.nom, info.epci && formatPopExact(info.epci.pop))
+      : t("popTitleWorld", info.commune.nom, formatPopExact(info.commune.pop));
+  }).catch(() => { if(popRequestKey === key){ el.innerHTML = ""; el.title = ""; } });
+}
+
+// ---------- Tooltips tactiles (équivalent mobile du survol souris) ----------
+// Les attributs title="" ne s'affichent qu'au survol, geste absent sur smartphone :
+// un tap (ou clic) sur l'élément affiche le détail dans une bulle, un second tap la ferme.
+(function(){
+  const TAP_TOOLTIP_SELECTOR = ".current-city-pop[title]";
+  let tipEl = null, activeTarget = null;
+  function hideTip(){
+    if(tipEl){ tipEl.remove(); tipEl = null; }
+    activeTarget = null;
+  }
+  function showTip(target){
+    const text = target.getAttribute("title");
+    if(!text) return;
+    hideTip();
+    tipEl = document.createElement("div");
+    tipEl.className = "js-tooltip";
+    tipEl.textContent = text;
+    document.body.appendChild(tipEl);
+    const rect = target.getBoundingClientRect();
+    const tipRect = tipEl.getBoundingClientRect();
+    let left = rect.left + rect.width / 2 - tipRect.width / 2;
+    left = Math.max(8, Math.min(left, window.innerWidth - tipRect.width - 8));
+    let top = rect.top - tipRect.height - 8;
+    if(top < 8) top = rect.bottom + 8;
+    tipEl.style.left = left + "px";
+    tipEl.style.top = top + "px";
+    activeTarget = target;
+  }
+  document.addEventListener("click", (e) => {
+    const el = e.target.closest(TAP_TOOLTIP_SELECTOR);
+    if(el){
+      e.stopPropagation();
+      if(activeTarget === el){ hideTip(); } else { showTip(el); }
+    } else {
+      hideTip();
+    }
+  }, true);
+  window.addEventListener("scroll", hideTip, true);
+  window.addEventListener("resize", hideTip);
+})();
 
 // ---------- Altitude ----------
 const altitudePromptEl = document.getElementById("altitude-prompt");
@@ -550,7 +1056,7 @@ function openAltitudePrompt(){
   document.getElementById("altitude-city-name").textContent = currentCity.name;
   const modelNoteEl = document.getElementById("altitude-model-note");
   modelNoteEl.textContent = (currentCity.modelElevation !== null && currentCity.modelElevation !== undefined)
-    ? `Altitude retenue par le modèle climatique pour ce point : ${Math.round(currentCity.modelElevation)} m.`
+    ? t("altitudeModelNote", Math.round(currentCity.modelElevation))
     : "";
   altitudeInputEl.value = (currentCity.elevation !== null && currentCity.elevation !== undefined) ? currentCity.elevation : "";
   altitudeFeedbackEl.textContent = "";
@@ -569,12 +1075,12 @@ document.getElementById("altitude-skip-btn").addEventListener("click", () => {
 document.getElementById("altitude-confirm-btn").addEventListener("click", () => {
   const val = parseFloat(altitudeInputEl.value);
   if(isNaN(val)){
-    altitudeFeedbackEl.textContent = "Indique une altitude en mètres, ou clique « Continuer sans préciser ».";
+    altitudeFeedbackEl.textContent = t("altitudeFeedbackError");
     altitudeFeedbackEl.style.color = "var(--danger)";
     return;
   }
   currentCity.elevation = Math.round(val);
-  altitudeFeedbackEl.textContent = `Altitude de ${currentCity.elevation} m appliquée aux calculs.`;
+  altitudeFeedbackEl.textContent = t("altitudeFeedbackApplied", currentCity.elevation);
   altitudeFeedbackEl.style.color = "var(--live)";
   renderCurrentCity();
   loadAndRender();
@@ -585,10 +1091,19 @@ document.getElementById("alt-edit-btn").addEventListener("click", openAltitudePr
 const periodChipsEl = document.getElementById("period-chips");
 const customRangeEl = document.getElementById("custom-range");
 
-const MONTHS_FR = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
 const ARCHIVE_MIN_YEAR = 1940; // début des archives climatiques ERA5
 
 function daysInMonth(year, month){ return new Date(year, month + 1, 0).getDate(); } // month: 0-11
+
+function monthOptionsHtml(){ return t("months").map((m, i) => `<option value="${i}">${m}</option>`).join(""); }
+function refreshMonthOptions(){
+  ["start", "end"].forEach(prefix => {
+    const sel = document.getElementById(prefix + "-month");
+    const v = sel.value;
+    sel.innerHTML = monthOptionsHtml();
+    if(v !== "") sel.value = v;
+  });
+}
 
 function buildDateSelects(prefix){
   const daySel = document.getElementById(prefix + "-day");
@@ -596,9 +1111,8 @@ function buildDateSelects(prefix){
   const yearSel = document.getElementById(prefix + "-year");
   const maxYear = todayMinusLag().getFullYear();
 
-  monthSel.innerHTML = MONTHS_FR.map((m, i) => `<option value="${i}">${m}</option>`).join("");
-  // Années les plus récentes en premier : plus rapide pour la plupart des usages,
-  // et taper "19" ou "1950" au clavier saute directement à l'année ancienne voulue.
+  monthSel.innerHTML = monthOptionsHtml();
+  // Années les plus récentes en premier : taper "1950" au clavier saute directement à l'année voulue.
   let yearOpts = "";
   for(let y = maxYear; y >= ARCHIVE_MIN_YEAR; y--){
     yearOpts += `<option value="${y}">${y}</option>`;
@@ -654,7 +1168,7 @@ periodChipsEl.querySelectorAll(".period-chip").forEach(chip => {
     customRangeEl.style.display = periodPreset === "custom" ? "flex" : "none";
     if(periodPreset === "custom" && !customRangeEl.dataset.initialized){
       const end = todayMinusLag();
-      const start = new Date(end); start.setDate(start.getDate() - 30);
+      const start = new Date(end); start.setDate(start.getDate() - 29);
       setSelectsFromDate("start", start);
       setSelectsFromDate("end", end);
       customRangeEl.dataset.initialized = "1";
@@ -671,8 +1185,9 @@ function getRange(){
     if(rawEnd > end) rawEnd = end;
     return { start: isoDate(start), end: isoDate(rawEnd) };
   }
+  // "30 derniers jours" = 30 jours bornes incluses
   const days = parseInt(periodPreset, 10);
-  const start = new Date(end.getTime() - days*86400000);
+  const start = new Date(end); start.setDate(start.getDate() - (days - 1));
   return { start: isoDate(start), end: isoDate(end) };
 }
 
@@ -682,10 +1197,13 @@ const cardsEl = document.getElementById("cards");
 const gaugePanelEl = document.getElementById("gauge-panel");
 
 function formatShort(iso){
-  return new Date(iso + "T00:00:00").toLocaleDateString("fr-FR", { day:"numeric", month:"short" });
+  return new Date(iso + "T00:00:00").toLocaleDateString(loc(), { day:"numeric", month:"short" });
+}
+function formatMedium(iso){
+  return new Date(iso + "T00:00:00").toLocaleDateString(loc(), { day:"numeric", month:"short", year:"numeric" });
 }
 function formatLong(iso){
-  return new Date(iso + "T00:00:00").toLocaleDateString("fr-FR", { day:"numeric", month:"long", year:"numeric" });
+  return new Date(iso + "T00:00:00").toLocaleDateString(loc(), { day:"numeric", month:"long", year:"numeric" });
 }
 
 let requestId = 0;
@@ -704,39 +1222,39 @@ function weatherEmoji(code){
 
 function degToCompass(deg){
   if(deg == null) return null;
-  const dirs = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSO","SO","OSO","O","ONO","NO","NNO"];
   const idx = Math.round(deg / 22.5) % 16;
-  return dirs[idx];
+  return t("compassDirs")[idx];
 }
 
-async function fetchDayDetails(date, elevationParam, mode){
+const dayDetailsCache = {};
+function fetchDayDetails(date, elevationParam, mode){
+  const key = [currentCity.lat, currentCity.lon, date, elevationParam, mode].join("|");
+  if(!dayDetailsCache[key]) dayDetailsCache[key] = fetchDayDetailsRaw(date, elevationParam, mode);
+  return dayDetailsCache[key];
+}
+async function fetchDayDetailsRaw(date, elevationParam, mode){
   try{
     const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${currentCity.lat}&longitude=${currentCity.lon}&start_date=${date}&end_date=${date}&hourly=relative_humidity_2m,temperature_2m,wind_speed_10m,wind_direction_10m&timezone=auto${elevationParam}`;
     const res = await fetch(url);
     const data = await res.json();
-    const hums = (data.hourly && data.hourly.relative_humidity_2m) ? data.hourly.relative_humidity_2m.filter(v => v != null) : [];
     const temps = (data.hourly && data.hourly.temperature_2m) ? data.hourly.temperature_2m : [];
     const times = (data.hourly && data.hourly.time) ? data.hourly.time : [];
     const windSpeeds = (data.hourly && data.hourly.wind_speed_10m) ? data.hourly.wind_speed_10m : [];
     const windDirs = (data.hourly && data.hourly.wind_direction_10m) ? data.hourly.wind_direction_10m : [];
-    const humidity = hums.length ? Math.round(hums.reduce((a,b) => a+b, 0) / hums.length) : null;
 
-    let hour = null, windSpeed = null, windDirection = null;
+    let windSpeed = null, windDeg = null;
     if(temps.length && times.length){
       let idx = 0;
       for(let i = 1; i < temps.length; i++){
         if(temps[i] == null) continue;
         if(mode === "max" ? temps[i] > temps[idx] : temps[i] < temps[idx]) idx = i;
       }
-      const d = new Date(times[idx]);
-      hour = String(d.getHours()).padStart(2, "0") + "h" + (d.getMinutes() ? String(d.getMinutes()).padStart(2,"0") : "");
       windSpeed = windSpeeds[idx] != null ? Math.round(windSpeeds[idx]) : null;
-      windDirection = windDirs[idx] != null ? degToCompass(windDirs[idx]) : null;
+      windDeg = windDirs[idx] != null ? windDirs[idx] : null;
     }
-
-    return { humidity, hour, windSpeed, windDirection };
+    return { windSpeed, windDeg };
   }catch(e){
-    return { humidity: null, hour: null, windSpeed: null, windDirection: null };
+    return { windSpeed: null, windDeg: null };
   }
 }
 
@@ -744,14 +1262,15 @@ async function loadAndRender(){
   const { start, end } = getRange();
   if(new Date(start) >= new Date(end)){
     chartStatusEl.style.display = "flex";
-    chartStatusEl.textContent = "Choisis une période valide (date de début avant la date de fin).";
+    chartStatusEl.textContent = t("chartStatusInvalidPeriod");
     return;
   }
   const myId = ++requestId;
   chartStatusEl.style.display = "flex";
-  chartStatusEl.textContent = `Chargement des relevés pour ${currentCity.name}…`;
+  chartStatusEl.textContent = t("chartStatusLoading", currentCity.name);
   gaugePanelEl.style.display = "none";
   cardsEl.innerHTML = "";
+  document.getElementById("bulletin-period").innerHTML = "";
 
   try{
     const elevationParam = (currentCity.elevation !== null && currentCity.elevation !== undefined && !isNaN(currentCity.elevation))
@@ -763,8 +1282,9 @@ async function loadAndRender(){
 
     if(!data.daily || !data.daily.time){
       chartStatusEl.style.display = "flex";
-      chartStatusEl.textContent = "Aucune donnée disponible pour cette période.";
+      chartStatusEl.textContent = t("chartStatusNoData");
       if(chart){ chart.destroy(); chart = null; }
+      lastRender = null;
       return;
     }
 
@@ -774,10 +1294,10 @@ async function loadAndRender(){
     const depthByDate = {};
     let depthSamples = 0;
     if(data.hourly && Array.isArray(data.hourly.time) && Array.isArray(data.hourly.snow_depth)){
-      data.hourly.time.forEach((t, i) => {
+      data.hourly.time.forEach((tm, i) => {
         const v = data.hourly.snow_depth[i];
         if(v === null || v === undefined) return;
-        const [d, hourPart] = t.split("T");
+        const [d, hourPart] = tm.split("T");
         const hour = parseInt(hourPart, 10);
         if(!depthByDate[d] || hour >= depthByDate[d].hour){
           depthByDate[d] = { hour, value: v };
@@ -797,10 +1317,10 @@ async function loadAndRender(){
     const freezingByDate = {};
     let freezingSamples = 0;
     if(data.hourly && Array.isArray(data.hourly.time) && Array.isArray(data.hourly.freezing_level_height)){
-      data.hourly.time.forEach((t, i) => {
+      data.hourly.time.forEach((tm, i) => {
         const v = data.hourly.freezing_level_height[i];
         if(v === null || v === undefined) return;
-        const d = t.split("T")[0];
+        const d = tm.split("T")[0];
         if(!freezingByDate[d]) freezingByDate[d] = { sum:0, count:0 };
         freezingByDate[d].sum += v;
         freezingByDate[d].count++;
@@ -819,7 +1339,7 @@ async function loadAndRender(){
     let pack = 0;
     let lastMeasured = 0;
 
-    const rows = dates.map((t,i) => {
+    const rows = dates.map((tm,i) => {
       const snow = data.daily.snowfall_sum ? data.daily.snowfall_sum[i] : null;
       const max = data.daily.temperature_2m_max[i];
       const min = data.daily.temperature_2m_min[i];
@@ -831,15 +1351,15 @@ async function loadAndRender(){
 
       let remaining;
       if(useMeasuredDepth){
-        if(depthByDate[t]) lastMeasured = depthByDate[t].value * 100; // m -> cm
+        if(depthByDate[tm]) lastMeasured = depthByDate[tm].value * 100; // m -> cm
         remaining = lastMeasured;
       } else {
         remaining = pack;
       }
 
       let freezingLevel;
-      if(useMeasuredFreezing && freezingByDate[t]){
-        freezingLevel = Math.round(freezingByDate[t].sum / freezingByDate[t].count);
+      if(useMeasuredFreezing && freezingByDate[tm]){
+        freezingLevel = Math.round(freezingByDate[tm].sum / freezingByDate[tm].count);
       } else if(max !== null && min !== null){
         const dailyMeanTemp = (max + min) / 2;
         freezingLevel = Math.round(Math.max(0, baseAltitude + (dailyMeanTemp / STANDARD_LAPSE_RATE) * 100));
@@ -848,8 +1368,9 @@ async function loadAndRender(){
       }
 
       return {
-        date:t,
+        date:tm,
         snow: snow,
+        precipitation: data.daily.precipitation_sum ? data.daily.precipitation_sum[i] : null,
         remaining: remaining,
         max, min,
         freezingLevel,
@@ -859,53 +1380,50 @@ async function loadAndRender(){
 
     if(!rows.length){
       chartStatusEl.style.display = "flex";
-      chartStatusEl.textContent = "Aucune donnée exploitable pour cette période.";
+      chartStatusEl.textContent = t("chartStatusNoUsableData");
       if(chart){ chart.destroy(); chart = null; }
+      lastRender = null;
       return;
     }
 
     chartStatusEl.style.display = "none";
-    renderChart(rows, useMeasuredDepth, useMeasuredFreezing);
-    renderStats(rows, start, end, useMeasuredDepth, useMeasuredFreezing);
+    lastRender = { rows, start, end, useMeasuredDepth, useMeasuredFreezing, updatedAt: new Date() };
+    rerender();
     syncUrl();
-
-    const now = new Date();
-    document.getElementById("updated-at").textContent =
-      "mis à jour à " + now.toLocaleTimeString("fr-FR", {hour:"2-digit", minute:"2-digit"});
 
   }catch(err){
     if(myId !== requestId) return;
     chartStatusEl.style.display = "flex";
-    chartStatusEl.textContent = "Impossible de charger les données (" + err.message + ")";
+    chartStatusEl.textContent = t("chartStatusError", err.message);
   }
 }
 
 function renderChart(rows, useMeasuredDepth, useMeasuredFreezing){
   const ctx = document.getElementById("snowChart").getContext("2d");
   const labels = rows.map(r => r.date);
-  const remainingLabel = useMeasuredDepth ? "Neige au sol (mesurée)" : "Neige au sol (estimée)";
-  const freezingLabel = useMeasuredFreezing ? "Isotherme 0°C" : "Isotherme 0°C (estimée)";
-  
-  // Altitude de la ville pour ligne de référence
+  const remainingLabel = useMeasuredDepth ? t("dsRemainingMeasured") : t("dsRemainingEstimated");
+  const freezingLabel = useMeasuredFreezing ? t("dsFreezingMeasured") : t("dsFreezingEstimated");
+
+  // Altitude du lieu pour ligne de référence
   const cityAlt = (currentCity.elevation !== null && currentCity.elevation !== undefined && !isNaN(currentCity.elevation))
     ? currentCity.elevation : null;
   const cityAltData = cityAlt && seriesVisibility.freezing ? rows.map(() => cityAlt) : rows.map(() => null);
-  
-  // Données de référence pour 0°C
-  const zeroTempData = seriesVisibility.temp ? rows.map(() => 0) : rows.map(() => null);
-  
+
+  // Ligne de référence 0°C (32°F)
+  const zeroTempData = seriesVisibility.temp ? rows.map(() => convTemp(0)) : rows.map(() => null);
+
   if(chart) chart.destroy();
   chart = new Chart(ctx, {
     data: {
       labels,
       datasets: [
-        { type:"bar", label:"Neige du jour", data: rows.map(r=>r.snow), backgroundColor: PALETTE.snow, borderRadius:2, yAxisID:"y", order:2, hidden: !seriesVisibility.snow },
-        { type:"bar", label:remainingLabel, data: rows.map(r=>r.remaining), backgroundColor: PALETTE.cumul, borderRadius:2, yAxisID:"y1", order:2, hidden: !seriesVisibility.remaining },
-        { type:"line", label:"Température maximale", data: rows.map(r=>r.max), borderColor: PALETTE.cold, backgroundColor: PALETTE.cold, pointRadius:0, borderWidth:1.3, borderDash:[3,3], tension:0.3, yAxisID:"y2", order:3, hidden: !seriesVisibility.temp },
-        { type:"line", label:"Température minimale", data: rows.map(r=>r.min), borderColor: "#4a90e2", backgroundColor: "#4a90e2", pointRadius:0, borderWidth:2, borderDash:[8,4], tension:0.3, yAxisID:"y2", order:3, hidden: !seriesVisibility.temp },
-        { type:"line", label:"Référence 0°C", data: zeroTempData, borderColor: "#7ec8e3", backgroundColor: "#7ec8e3", pointRadius:0, borderWidth:1, borderDash:[4,2], tension:0, yAxisID:"y2", order:4, hidden: !seriesVisibility.temp, spanGaps:false },
-        { type:"line", label:freezingLabel, data: rows.map(r=>r.freezingLevel), borderColor: PALETTE.freezing, backgroundColor: PALETTE.freezing, pointRadius:0, borderWidth:1.5, borderDash:[6,3], tension:0.2, yAxisID:"y3", order:5, hidden: !seriesVisibility.freezing, spanGaps:true },
-        { type:"line", label:`Altitude du lieu (${cityAlt} m)`, data: cityAltData, borderColor: "#c9a6ff", backgroundColor: "#c9a6ff", pointRadius:0, borderWidth:1, borderDash:[2,2], tension:0, yAxisID:"y3", order:6, hidden: !seriesVisibility.freezing || !cityAlt, spanGaps:false },
+        { key:"snow", type:"bar", label:t("dsSnow"), data: rows.map(r=>r.snow), backgroundColor: PALETTE.snow, borderRadius:2, yAxisID:"y", order:2, hidden: !seriesVisibility.snow },
+        { key:"remaining", type:"bar", label:remainingLabel, data: rows.map(r=>r.remaining), backgroundColor: PALETTE.cumul, borderRadius:2, yAxisID:"y1", order:2, hidden: !seriesVisibility.remaining },
+        { key:"temp", type:"line", label:t("dsTempMax"), data: rows.map(r=>convTemp(r.max)), borderColor: PALETTE.cold, backgroundColor: PALETTE.cold, pointRadius:0, borderWidth:1.3, borderDash:[3,3], tension:0.3, yAxisID:"y2", order:3, hidden: !seriesVisibility.temp },
+        { key:"temp", type:"line", label:t("dsTempMin"), data: rows.map(r=>convTemp(r.min)), borderColor: "#4a90e2", backgroundColor: "#4a90e2", pointRadius:0, borderWidth:2, borderDash:[8,4], tension:0.3, yAxisID:"y2", order:3, hidden: !seriesVisibility.tempMin },
+        { key:"temp", type:"line", label:t("dsZeroRef", fmtTemp(0)), data: zeroTempData, borderColor: "#7ec8e3", backgroundColor: "#7ec8e3", pointRadius:0, borderWidth:1, borderDash:[4,2], tension:0, yAxisID:"y2", order:4, hidden: !seriesVisibility.temp, spanGaps:false },
+        { key:"altitude", type:"line", label:freezingLabel, data: rows.map(r=>r.freezingLevel), borderColor: PALETTE.freezing, backgroundColor: PALETTE.freezing, pointRadius:0, borderWidth:1.5, borderDash:[6,3], tension:0.2, yAxisID:"y3", order:5, hidden: !seriesVisibility.freezing, spanGaps:true },
+        { key:"altitude", type:"line", label:t("dsCityAlt", cityAlt), data: cityAltData, borderColor: "#c9a6ff", backgroundColor: "#c9a6ff", pointRadius:0, borderWidth:1, borderDash:[2,2], tension:0, yAxisID:"y3", order:6, hidden: !seriesVisibility.freezing || !cityAlt, spanGaps:false },
       ],
     },
     options: {
@@ -920,10 +1438,11 @@ function renderChart(rows, useMeasuredDepth, useMeasuredFreezing){
           callbacks:{
             title: (items) => formatLong(items[0].label),
             label: (item) => {
+              const k = item.dataset.key;
               if(item.raw === null || item.raw === undefined) return `${item.dataset.label} : —`;
-              if(item.dataset.label === "Température maximale" || item.dataset.label === "Température minimale") return `${item.dataset.label} : ${item.raw.toFixed(1)}°`;
-              if(item.dataset.label.startsWith("Isotherme")) return `${item.dataset.label} : ${Math.round(item.raw)} m`;
-              return `${item.dataset.label} : ${item.raw.toFixed(1)} cm`;
+              if(k === "temp") return `${item.dataset.label} : ${fmtNum(item.raw, 1)}${unitSuffix()}`;
+              if(k === "altitude") return `${item.dataset.label} : ${Math.round(item.raw)} m`;
+              return `${item.dataset.label} : ${fmtNum(item.raw, 1)} cm`;
             },
           }
         }
@@ -938,13 +1457,13 @@ function renderChart(rows, useMeasuredDepth, useMeasuredFreezing){
           position:"left",
           grid:{ color:"#152539" },
           ticks:{ color:"#83a0b8", font:{ family:"IBM Plex Mono", size:11 }, callback: v => v + " cm" },
-          title:{ display:true, text:"Neige du jour (cm)", color:"#83a0b8", font:{ family:"IBM Plex Mono", size:10 } },
+          title:{ display:true, text:t("axisSnow"), color:"#83a0b8", font:{ family:"IBM Plex Mono", size:10 } },
         },
         y1:{
           position:"right",
           grid:{ display:false },
           ticks:{ color:"#8fe3ff", font:{ family:"IBM Plex Mono", size:11 }, callback: v => v + " cm" },
-          title:{ display:true, text:"Neige au sol (cm)", color:"#8fe3ff", font:{ family:"IBM Plex Mono", size:10 } },
+          title:{ display:true, text:t("axisRemaining"), color:"#8fe3ff", font:{ family:"IBM Plex Mono", size:10 } },
         },
         y2:{
           display:false,
@@ -954,145 +1473,191 @@ function renderChart(rows, useMeasuredDepth, useMeasuredFreezing){
           display: seriesVisibility.freezing,
           grid:{ display:false },
           ticks:{ color:"#c9a6ff", font:{ family:"IBM Plex Mono", size:11 }, callback: v => Math.round(v) + " m" },
-          title:{ display:true, text:"Isotherme 0°C (m)", color:"#c9a6ff", font:{ family:"IBM Plex Mono", size:10 } },
+          title:{ display:true, text:t("axisFreezing"), color:"#c9a6ff", font:{ family:"IBM Plex Mono", size:10 } },
         },
       },
     },
   });
 }
 
+// ---------- Bulletin de la période ----------
+// Nombre de jours de la période, bornes incluses (calcul en UTC pour éviter les changements d'heure)
+function periodDayCount(start, end){
+  const [ys, ms, ds] = start.split("-").map(Number), [ye, me, de] = end.split("-").map(Number);
+  return Math.round((Date.UTC(ye, me - 1, de) - Date.UTC(ys, ms - 1, ds)) / 86400000) + 1;
+}
+function periodLabel(start, end){
+  if(periodPreset === "7") return t("periodTextPreset7");
+  if(periodPreset === "30") return t("periodTextPreset30");
+  if(periodPreset === "90") return t("periodTextPreset90");
+  if(periodPreset === "365") return t("periodTextPreset365");
+  return t("periodTextCustom", formatLong(start), formatLong(end));
+}
+function renderBulletin(rows, start, end, s){
+  const el = document.getElementById("bulletin-period");
+  if(!el) return;
+  if(!rows.length){ el.innerHTML = ""; return; }
+  const label = periodLabel(start, end);
+  const summaryLabel = periodPreset === "custom" ? `${label}, ${t("periodDays", periodDayCount(start, end))}` : label;
+  const cityLabel = currentCity.name + (currentCity.admin1 ? `, ${currentCity.admin1}` : "");
+  const pct = rows.length ? Math.round(s.snowDayCount / rows.length * 100) : 0;
+
+  let summary = s.snowDayCount > 0
+    ? t("bulletinSnow", cityLabel, fmtNum(s.totalSnow, 1), summaryLabel, s.snowDayCount, pct)
+      + t("bulletinPeak", fmtNum(s.maxSnow, 1), formatLong(s.maxSnowRow.date))
+    : t("bulletinNoSnow", cityLabel, summaryLabel);
+  summary += t("bulletinGround", fmtNum(s.remainingNow, 1), s.useMeasuredDepth);
+  summary += t("bulletinTemps", fmtNum(convTemp(s.minTemp), 1), fmtNum(convTemp(s.maxTemp), 1), unitSuffix());
+
+  const alerts = [];
+  if(s.heavyDays > 0) alerts.push({ type:"neige", icon:"🌨️", text:t("alertHeavy", s.heavyDays, FORTE_CHUTE_CM, label) });
+  if(s.gelDays > 0) alerts.push({ type:"gel", icon:"❄️", text:t("alertGel", s.gelDays, Math.round(convTemp(GEL_SEUIL)), unitSuffix(), label) });
+  if(s.rainDays > 0) alerts.push({ type:"pluie", icon:"🌧️", text:t("alertRain", s.rainDays, label) });
+  if(s.snowDayCount === 0) alerts.push({ type:"vent", icon:"ℹ️", text:t("alertNoSnow", label) });
+
+  const alertsHtml = alerts.length
+    ? `<div class="bulletin-alerts">${alerts.map(a =>
+        `<div class="bulletin-alert bulletin-alert-${a.type}"><span class="bulletin-alert-icon">${a.icon}</span>${a.text}</div>`
+      ).join("")}</div>`
+    : "";
+
+  el.innerHTML = `
+    <div class="bulletin-header">${t("bulletinHeader", `${t("periodTextCustom", formatLong(start), formatLong(end))}, ${t("periodDays", periodDayCount(start, end))}`)}</div>
+    <div class="bulletin-summary">${summary}</div>
+    ${alertsHtml}
+  `;
+}
+
 function renderStats(rows, start, end, useMeasuredDepth, useMeasuredFreezing){
   let maxSnowRow = rows[0], coldRow = rows[0], totalSnow = 0, snowDaySum = 0, snowDayCount = 0;
+  let minTemp = rows[0].min, maxTemp = rows[0].max;
   rows.forEach(r => {
     if(r.snow > maxSnowRow.snow) maxSnowRow = r;
     if(r.min < coldRow.min) coldRow = r;
+    if(r.min < minTemp) minTemp = r.min;
+    if(r.max > maxTemp) maxTemp = r.max;
     totalSnow += (r.snow || 0);
-    if(r.snow && r.snow >= 0.1){ snowDaySum += r.snow; snowDayCount++; }
+    if(r.snow && r.snow >= JOUR_NEIGEUX_CM){ snowDaySum += r.snow; snowDayCount++; }
   });
   const avgPerSnowDay = snowDayCount ? snowDaySum / snowDayCount : null;
   const maxSnow = maxSnowRow.snow || 0;
   const remainingNow = rows[rows.length - 1].remaining || 0;
-  const sourceLabel = useMeasuredDepth
-    ? "mesure ERA5-Land"
-    : "estimation (modèle degré-jour, fonte dès que T° max > 0°C)";
+  const heavyDays = rows.filter(r => r.snow !== null && r.snow >= FORTE_CHUTE_CM).length;
+  const gelDays = rows.filter(r => r.min !== null && r.min <= GEL_SEUIL).length;
+  const rainDays = rows.filter(r => r.precipitation !== null && r.precipitation >= PLUIE_SEUIL_MM && (r.snow || 0) < JOUR_NEIGEUX_CM).length;
+  const sourceLabel = useMeasuredDepth ? t("srcMeasured") : t("srcEstimated");
 
   const freezingRows = rows.filter(r => r.freezingLevel !== null && r.freezingLevel !== undefined);
-  const avgFreezing = freezingRows.length ? freezingRows.reduce((s,r) => s + r.freezingLevel, 0) / freezingRows.length : null;
+  const avgFreezing = freezingRows.length ? freezingRows.reduce((sum,r) => sum + r.freezingLevel, 0) / freezingRows.length : null;
   const cityAlt = (currentCity.elevation !== null && currentCity.elevation !== undefined && !isNaN(currentCity.elevation))
     ? currentCity.elevation : null;
-  const freezingSourceLabel = useMeasuredFreezing
-    ? "mesure horaire ERA5"
-    : "estimation (gradient standard 0,65°C/100 m)";
+  const freezingSourceLabel = useMeasuredFreezing ? t("freezingSrcMeasured") : t("freezingSrcEstimated");
   let freezingSub;
   if(cityAlt !== null && freezingRows.length){
     const aboveCount = freezingRows.filter(r => r.freezingLevel > cityAlt).length;
     const belowCount = freezingRows.filter(r => r.freezingLevel <= cityAlt).length;
-    freezingSub = `au-dessus ${aboveCount}j · au-dessous/égal ${belowCount}j (pluie) — sur ${freezingRows.length}j`;
+    freezingSub = t("freezingSubAlt", aboveCount, belowCount, freezingRows.length);
   } else {
-    freezingSub = "altitude où la température atteint 0°C";
+    freezingSub = t("freezingSubDefault");
   }
+
+  renderBulletin(rows, start, end, { totalSnow, snowDayCount, maxSnow, maxSnowRow, remainingNow, useMeasuredDepth, minTemp, maxTemp, heavyDays, gelDays, rainDays });
 
   // Jauge : intensité des chutes (0 → jour le plus enneigé)
   gaugePanelEl.style.display = "block";
-  const altSuffix = (currentCity.elevation !== null && currentCity.elevation !== undefined) ? ` · altitude ${currentCity.elevation} m` : "";
-  document.getElementById("gauge-dates").textContent = `${formatShort(start)} — ${formatShort(end)}${altSuffix}`;
+  const altSuffix = cityAlt !== null ? t("gaugeAltitude", cityAlt) : "";
+  document.getElementById("gauge-dates").textContent = `${formatMedium(start)} — ${formatMedium(end)}${altSuffix}`;
   document.getElementById("gauge-min").textContent = `0 cm`;
-  document.getElementById("gauge-avg").textContent = avgPerSnowDay !== null ? `${avgPerSnowDay.toFixed(1)} cm/j neigeux` : "—";
-  document.getElementById("gauge-max").textContent = `${maxSnow.toFixed(1)} cm`;
+  document.getElementById("gauge-avg").textContent = avgPerSnowDay !== null ? t("gaugeAvg", fmtNum(avgPerSnowDay, 1)) : "—";
+  document.getElementById("gauge-max").textContent = `${fmtNum(maxSnow, 1)} cm`;
   const pos = (avgPerSnowDay !== null && maxSnow > 0) ? Math.min(100, Math.max(0, (avgPerSnowDay / maxSnow) * 100)) : 0;
   document.getElementById("gauge-marker").style.left = `calc(${pos}% - 2px)`;
 
+  const n = rows.length;
   cardsEl.innerHTML = `
     <div class="card" style="--accent:${PALETTE.cumul}">
-      <div class="card-label">Neige au sol restante (fin de période)</div>
-      <div class="card-value" style="color:${PALETTE.cumul}">${remainingNow.toFixed(1)} cm</div>
-      <div class="card-sub">${formatLong(rows[rows.length-1].date)}</div>
+      <div class="card-label">${t("cardRemaining")}</div>
+      <div class="card-value" style="color:${PALETTE.cumul}">${fmtNum(remainingNow, 1)} cm</div>
+      <div class="card-sub">${formatLong(rows[n-1].date)}</div>
       <div class="card-humidity">🧊 ${sourceLabel}</div>
     </div>
     <div class="card" style="--accent:#c9a6ff">
-      <div class="card-label">Isotherme 0°C (moyenne)</div>
+      <div class="card-label">${t("cardFreezing")}</div>
       <div class="card-value" style="color:#c9a6ff">${avgFreezing !== null ? Math.round(avgFreezing) + " m" : "—"}</div>
       <div class="card-sub">${freezingSub}</div>
       <div class="card-humidity">🌡️ ${freezingSourceLabel}</div>
     </div>
     <div class="card" style="--accent:${PALETTE.snow}">
-      <div class="card-label">Journée la plus enneigée</div>
+      <div class="card-label">${t("cardSnowiest")}</div>
       <div class="card-value-row">
         <span class="card-icon">${weatherEmoji(maxSnowRow.weatherCode)}</span>
-        <div class="card-value" style="color:${PALETTE.snow}">${maxSnow.toFixed(1)} cm</div>
+        <div class="card-value" style="color:${PALETTE.snow}">${fmtNum(maxSnow, 1)} cm</div>
       </div>
       <div class="card-sub">${formatLong(maxSnowRow.date)}</div>
-      <div class="card-humidity" id="hum-max">🌡️ mini <b>${maxSnowRow.min.toFixed(1)}°</b></div>
-      <div class="card-wind" id="wind-max">💨 vent <b>…</b></div>
+      <div class="card-humidity" id="hum-max">${t("cardMinTemp")} <b>${fmtTemp(maxSnowRow.min)}</b></div>
+      <div class="card-wind" id="wind-max">${t("cardWind")} <b>…</b></div>
     </div>
     <div class="card" style="--accent:${PALETTE.cold}">
-      <div class="card-label">Journée la plus froide</div>
+      <div class="card-label">${t("cardColdest")}</div>
       <div class="card-value-row">
         <span class="card-icon">${weatherEmoji(coldRow.weatherCode)}</span>
-        <div class="card-value" style="color:${PALETTE.cold}">${coldRow.min.toFixed(1)}°</div>
+        <div class="card-value" style="color:${PALETTE.cold}">${fmtTemp(coldRow.min)}</div>
       </div>
       <div class="card-sub">${formatLong(coldRow.date)}</div>
-      <div class="card-humidity" id="hum-min">❄️ neige ce jour-là <b>${(coldRow.snow || 0).toFixed(1)} cm</b></div>
-      <div class="card-wind" id="wind-min">💨 vent <b>…</b></div>
+      <div class="card-humidity" id="hum-min">${t("cardSnowThatDay")} <b>${fmtNum(coldRow.snow || 0, 1)} cm</b></div>
+      <div class="card-wind" id="wind-min">${t("cardWind")} <b>…</b></div>
     </div>
     <div class="card" style="--accent:#f2f8fb">
-      <div class="card-label">Cumul brut des chutes</div>
-      <div class="card-value">${totalSnow.toFixed(1)} cm</div>
-      <div class="card-sub">avant fonte, sur ${rows.length} jours</div>
+      <div class="card-label">${t("cardTotal")}</div>
+      <div class="card-value">${fmtNum(totalSnow, 1)} cm</div>
+      <div class="card-sub">${t("cardTotalSub", n)}</div>
     </div>
     <div class="card" style="--accent:${PALETTE.snow}">
-      <div class="card-label">Jours avec neige</div>
+      <div class="card-label">${t("cardSnowDays")}</div>
       <div class="card-value" style="color:${PALETTE.snow}">${snowDayCount}</div>
-      <div class="card-sub">sur ${rows.length} jours observés (${rows.length ? Math.round(snowDayCount / rows.length * 100) : 0}%)</div>
+      <div class="card-sub">${t("cardSnowDaysSub", n, n ? Math.round(snowDayCount / n * 100) : 0)}</div>
     </div>
     <div class="card" style="--accent:#f2f8fb">
-      <div class="card-label">Neige par jour neigeux (moy.)</div>
-      <div class="card-value">${avgPerSnowDay !== null ? avgPerSnowDay.toFixed(1)+" cm" : "—"}</div>
-      <div class="card-sub">jours avec ≥ 0,1 cm</div>
+      <div class="card-label">${t("cardAvgPerDay")}</div>
+      <div class="card-value">${avgPerSnowDay !== null ? fmtNum(avgPerSnowDay, 1) + " cm" : "—"}</div>
+      <div class="card-sub">${t("cardAvgPerDaySub", fmtNum(JOUR_NEIGEUX_CM, 1))}</div>
     </div>
   `;
 
-  const elevationParam = (currentCity.elevation !== null && currentCity.elevation !== undefined && !isNaN(currentCity.elevation))
-    ? `&elevation=${currentCity.elevation}` : "";
-  fetchDayDetails(maxSnowRow.date, elevationParam, "max").then(({ windSpeed, windDirection }) => {
+  const elevationParam = cityAlt !== null ? `&elevation=${cityAlt}` : "";
+  const windHtml = ({ windSpeed, windDeg }) => windSpeed != null
+    ? `${t("cardWind")} <b>${windSpeed} km/h${windDeg != null ? " " + degToCompass(windDeg) : ""}</b>`
+    : `${t("cardWind")} <b>—</b>`;
+  fetchDayDetails(maxSnowRow.date, elevationParam, "max").then(d => {
     const windEl = document.getElementById("wind-max");
-    if(windEl){
-      windEl.innerHTML = windSpeed != null
-        ? `💨 vent <b>${windSpeed} km/h${windDirection ? " " + windDirection : ""}</b>`
-        : `💨 vent <b>—</b>`;
-    }
+    if(windEl) windEl.innerHTML = windHtml(d);
   });
-  fetchDayDetails(coldRow.date, elevationParam, "min").then(({ windSpeed, windDirection }) => {
+  fetchDayDetails(coldRow.date, elevationParam, "min").then(d => {
     const windEl = document.getElementById("wind-min");
-    if(windEl){
-      windEl.innerHTML = windSpeed != null
-        ? `💨 vent <b>${windSpeed} km/h${windDirection ? " " + windDirection : ""}</b>`
-        : `💨 vent <b>—</b>`;
-    }
+    if(windEl) windEl.innerHTML = windHtml(d);
   });
 }
 
 document.getElementById("refresh-btn").addEventListener("click", loadAndRender);
 
 // ---------- Bascule d'affichage des séries du graphique ----------
-const SERIES_INDEX = { snow:0, remaining:1, temp:2, tempMin:3, freezing:5 };
+const SERIES_INDEX = { snow:0, remaining:1, tempMin:3, freezing:5 };
 document.querySelectorAll("#legend-row .legend-item").forEach(el => {
-  el.title = "Cliquer pour afficher/masquer cette série";
   el.addEventListener("click", () => {
     const key = el.dataset.key;
     seriesVisibility[key] = !seriesVisibility[key];
     el.classList.toggle("legend-off", !seriesVisibility[key]);
     if(chart){
       if(key === "temp"){
-        // Masquer/afficher temp max (2), temp min (3), et référence 0°C (4) ensemble
+        // Température max (2) et référence 0°C (4) ensemble
         chart.setDatasetVisibility(2, seriesVisibility[key]);
-        chart.setDatasetVisibility(3, seriesVisibility[key]);
         chart.setDatasetVisibility(4, seriesVisibility[key]);
+      } else if(key === "freezing"){
+        chart.setDatasetVisibility(5, seriesVisibility.freezing);
+        chart.setDatasetVisibility(6, seriesVisibility.freezing && !!(currentCity.elevation !== null && currentCity.elevation !== undefined));
+        if(chart.options.scales.y3) chart.options.scales.y3.display = seriesVisibility.freezing;
       } else if(SERIES_INDEX[key] !== undefined){
         chart.setDatasetVisibility(SERIES_INDEX[key], seriesVisibility[key]);
-      }
-      if(key === "freezing" && chart.options.scales.y3){
-        chart.options.scales.y3.display = seriesVisibility.freezing;
       }
       chart.update();
     }
@@ -1104,15 +1669,116 @@ document.getElementById("share-btn").addEventListener("click", async () => {
   try{
     await navigator.clipboard.writeText(window.location.href);
     const btn = document.getElementById("share-btn");
-    const original = btn.textContent;
-    btn.textContent = "✓ Lien copié";
-    setTimeout(() => btn.textContent = original, 1800);
+    btn.textContent = t("shareCopied");
+    setTimeout(() => btn.textContent = t("shareBtn"), 1800);
   }catch(e){
-    prompt("Copie ce lien :", window.location.href);
+    prompt(t("sharePrompt"), window.location.href);
   }
 });
 
-// ---------- Init from URL ----------
+// ---------- Panneau "Fonctionnement du site" ----------
+const FEATURES_CONTENT = {
+  fr: `
+    <details>
+      <summary>ℹ️ Fonctionnement du site</summary>
+      <div class="features-body">
+        <h3>🔍 Lieu</h3>
+        <ul>
+          <li>Recherche de n'importe quelle ville ou station de ski au monde (géocodage Open-Meteo)</li>
+          <li><b>Altitude précise</b> (bouton ⛰ Altitude), fortement conseillée pour la neige : chutes, températures et fonte sont recalculées pour ce point</li>
+          <li><b>Population</b> sous le nom du lieu : en France, commune et agglomération (intercommunalité / EPCI, INSEE via geo.api.gouv.fr) ; hors France, population de la ville (Open-Meteo / GeoNames) — détail au survol ou au toucher</li>
+        </ul>
+        <h3>📅 Période</h3>
+        <ul>
+          <li>7 jours, 30 jours, 3 mois, 1 an, ou dates personnalisées depuis 1940 (archives climatiques ERA5)</li>
+          <li class="f-dim">Les derniers jours sont consolidés avec environ 5 jours de délai</li>
+        </ul>
+        <h3>📈 Graphique</h3>
+        <ul>
+          <li><b>Neige du jour</b> (cm) et <b>neige au sol restante</b> (cm), après fonte</li>
+          <li>Neige au sol : mesure ERA5-Land quand elle couvre au moins 80 % de la période, sinon estimation « degré-jour » (1,4 cm fondu par °C au-dessus de 0°C de température maximale, par jour)</li>
+          <li>Températures maximale et minimale, avec la référence 0°C</li>
+          <li>Isotherme 0°C (mesurée ou estimée) et altitude du lieu : au-dessus de l'isotherme, les précipitations tombent en neige</li>
+          <li>Clic sur la légende pour masquer/afficher une courbe</li>
+        </ul>
+        <h3>📋 Bulletin de la période</h3>
+        <ul>
+          <li>Cumul de neige, nombre et part de jours neigeux, plus forte chute, neige au sol en fin de période, plage de températures</li>
+          <li>Alertes : fortes chutes (≥20 cm en une journée), gel (mini ≤0°C), pluie (précipitations ≥1 mm sans neige, qui lessivent le manteau)</li>
+        </ul>
+        <h3>🗂️ Cartes</h3>
+        <ul>
+          <li>Neige au sol en fin de période, isotherme 0°C moyenne (jours au-dessus / au-dessous de l'altitude du lieu)</li>
+          <li>Journée la plus enneigée et la plus froide, avec le vent</li>
+          <li>Cumul brut des chutes, jours avec neige (≥0,1 cm), neige moyenne par jour neigeux</li>
+        </ul>
+        <h3>⚙️ Confort d'usage</h3>
+        <ul>
+          <li>FR/EN, °C/°F (préférences mémorisées), lien partageable (conserve le lieu, l'altitude et la période)</li>
+          <li class="f-dim">Les hauteurs de neige restent en cm et les altitudes en m</li>
+        </ul>
+      </div>
+    </details>
+  `,
+  en: `
+    <details>
+      <summary>ℹ️ How the site works</summary>
+      <div class="features-body">
+        <h3>🔍 Location</h3>
+        <ul>
+          <li>Search any town or ski resort in the world (Open-Meteo geocoding)</li>
+          <li><b>Precise altitude</b> (⛰ Altitude button), strongly recommended for snow: snowfall, temperatures and melting are recomputed for that point</li>
+          <li><b>Population</b> under the location name: in France, town and urban area (inter-municipal area / EPCI, INSEE via geo.api.gouv.fr); elsewhere, the town's population (Open-Meteo / GeoNames) — details on hover or tap</li>
+        </ul>
+        <h3>📅 Period</h3>
+        <ul>
+          <li>7 days, 30 days, 3 months, 1 year, or custom dates back to 1940 (ERA5 climate archive)</li>
+          <li class="f-dim">The latest days are consolidated with about a 5-day delay</li>
+        </ul>
+        <h3>📈 Chart</h3>
+        <ul>
+          <li><b>Daily snowfall</b> (cm) and <b>snow remaining on the ground</b> (cm), after melting</li>
+          <li>Snow on the ground: ERA5-Land measurement when it covers at least 80% of the period, otherwise a “degree-day” estimate (1.4 cm melted per °C of daily maximum above 0°C)</li>
+          <li>Maximum and minimum temperatures, with the 0°C reference</li>
+          <li>0°C isotherm (measured or estimated) and location altitude: above the isotherm, precipitation falls as snow</li>
+          <li>Click the legend to show/hide a line</li>
+        </ul>
+        <h3>📋 Period bulletin</h3>
+        <ul>
+          <li>Total snowfall, number and share of snowy days, heaviest snowfall, snow on the ground at the end of the period, temperature range</li>
+          <li>Alerts: heavy snowfall (≥20 cm in one day), frost (min ≤0°C), rain (precipitation ≥1 mm without snow, which washes the snowpack away)</li>
+        </ul>
+        <h3>🗂️ Cards</h3>
+        <ul>
+          <li>Snow on the ground at the end of the period, average 0°C isotherm (days above / below the location altitude)</li>
+          <li>Snowiest and coldest days, with wind</li>
+          <li>Total snowfall, days with snow (≥0.1 cm), average snow per snowy day</li>
+        </ul>
+        <h3>⚙️ Convenience</h3>
+        <ul>
+          <li>FR/EN, °C/°F (preferences remembered), shareable link (keeps the location, altitude and period)</li>
+          <li class="f-dim">Snow depths stay in cm and altitudes in m</li>
+        </ul>
+      </div>
+    </details>
+  `,
+};
+function renderFeatures(){
+  const el = document.getElementById("features-panel");
+  if(!el) return;
+  const wasOpen = el.querySelector("details") ? el.querySelector("details").open : false;
+  el.innerHTML = FEATURES_CONTENT[lang] || FEATURES_CONTENT.fr;
+  if(wasOpen) el.querySelector("details").open = true;
+}
+
+// ---------- Init ----------
+document.querySelectorAll(".lang-btn[data-lang]").forEach(btn => {
+  btn.addEventListener("click", () => setLang(btn.dataset.lang));
+});
+document.querySelectorAll(".lang-btn[data-unit]").forEach(btn => {
+  btn.addEventListener("click", () => setTempUnit(btn.dataset.unit));
+});
+
 (function init(){
   const params = new URLSearchParams(window.location.search);
   const c = params.get("c");
@@ -1130,10 +1796,11 @@ document.getElementById("share-btn").addEventListener("click", async () => {
       c.classList.toggle("active", c.dataset.preset === periodPreset);
     });
   }
-  renderCurrentCity();
+  applyStaticTranslations();
   loadAndRender();
 })();
 </script>
+
 <script data-goatcounter="https://fef73.goatcounter.com/count"
         async src="//gc.zgo.at/count.js"></script>
 </body>
