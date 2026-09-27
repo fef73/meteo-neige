@@ -359,6 +359,14 @@
   .features-panel li{margin-bottom:4px;}
   .features-panel li b{color:var(--text-hi); font-weight:600;}
   .features-panel .f-dim{color:var(--text-lo);}
+  .footer-signature{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    margin-top:14px;
+  }
+  .footer-signature img{
+    width:26px; height:26px; border-radius:50%; object-fit:cover;
+    box-shadow:0 0 0 1px var(--hairline);
+  }
 </style>
 </head>
 <body>
@@ -508,6 +516,10 @@
       rarement à l'altitude par défaut d'une ville de vallée — précise l'altitude d'une station ou d'un sommet
       pour recalculer chutes et fonte à ce point précis.
     </div>
+    <div class="footer-signature">
+      <img src="data:image/jpeg;base64,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" alt="fef73">
+      <span id="footer-signature-text">Créé par fef73 avec claude.ai · 27 septembre 2026</span>
+    </div>
     <div class="copyright-note" style="margin-top:14px; font-size:11px; opacity:.6; text-align:center;">© 2026 Fernand (fef73) — Tous droits réservés · All rights reserved</div>
   </footer>
 </div>
@@ -529,6 +541,7 @@ const GEL_SEUIL = 0;           // °C
 const TRANSLATIONS = {
   fr: {
     locale: "fr-FR",
+    footerSignature: "Créé par fef73 avec claude.ai · 27 septembre 2026",
     eyebrow: "relevé climatique — open-meteo",
     title: "Historique des Chutes de Neige pour 1 site",
     subtitle: "Choisis une ville (ou une station de ski) et une période : le graphique retrace les chutes de neige quotidiennes et ce qu'il en reste réellement au sol, une fois la fonte prise en compte.",
@@ -632,6 +645,7 @@ const TRANSLATIONS = {
   },
   en: {
     locale: "en-US",
+    footerSignature: "Made by fef73 with claude.ai · Sep 27, 2026",
     eyebrow: "climate record — open-meteo",
     title: "Snowfall history for one location",
     subtitle: "Pick a town (or a ski resort) and a period: the chart traces daily snowfall and how much actually remains on the ground once melting is taken into account.",
@@ -796,6 +810,8 @@ function syncUrl(){
 function setText(id, key, ...args){ const el = document.getElementById(id); if(el) el.textContent = t(key, ...args); }
 function applyStaticTranslations(){
   document.documentElement.lang = lang;
+  const sigText = document.getElementById("footer-signature-text");
+  if(sigText) sigText.textContent = t("footerSignature");
   document.title = t("title");
   document.querySelectorAll(".lang-btn[data-lang]").forEach(b => b.classList.toggle("active", b.dataset.lang === lang));
   document.querySelectorAll(".lang-btn[data-unit]").forEach(b => b.classList.toggle("active", b.dataset.unit === tempUnit));
