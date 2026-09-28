@@ -50,19 +50,38 @@ Site : https://fef73.github.io/meteo-neige/ — accessible aussi depuis le lance
 
 - Interface bilingue FR/EN et unité °C/°F (préférences mémorisées) — les hauteurs de neige restent en cm et les altitudes en m.
 - Lien de partage qui conserve le lieu, l'altitude et la période.
+- Accès direct par URL avec coordonnées GPS, pour un raccourci ou une appli mobile :
+  ```
+  ?lat=45.2667&lon=6.3167&nom=La Toussuire&alt=1800
+  ```
+- Position GPS sans nom (appli mobile, raccourci) : la **commune, la région et le pays** sont retrouvés automatiquement par géocodage inverse (Nominatim / OpenStreetMap). Si le service ne répond pas en 4 secondes, « Position GPS » est affiché.
+- Depuis le lanceur [comparateur-meteo.fr](https://comparateur-meteo.fr/), le bouton **📍 Ma position** transmet la position du téléphone et le nom choisi.
 - Le fonctionnement du site est aussi résumé dans un panneau repliable juste avant le pied de page.
+
+## Cache local et hors connexion
+
+- **Cache des archives** : chaque jour consulté est gardé dans le téléphone (IndexedDB). Les périodes déjà vues s'affichent aussitôt, et seuls les jours manquants sont demandés à Open-Meteo.
+  - Ce sont les données brutes de chaque jour qui sont gardées (chutes, températures, hauteur de neige, isotherme) : la neige restante au sol est recalculée à chaque affichage, donc toujours juste quelle que soit la période.
+  - Un enregistrement par lieu (coordonnées) et par altitude.
+  - Les 8 derniers jours ne sont jamais mis en cache, car ERA5 les consolide encore.
+  - Le nombre de jours lus dans le cache est indiqué à côté de l'heure de mise à jour (« 💾 27 j en cache »).
+- **⬇ Enregistrer / ⬆ Restaurer** (bas de page) : sauvegarde du cache dans un fichier `meteo-cache-AAAA-MM-JJ.json`, puis restauration sur le même appareil ou un autre. Un seul fichier couvre l'historique ville et l'historique neige, qui partagent la même base.
+- **Vider le cache** : n'efface que les données de ce site.
+- **Hors connexion** : après une première visite, la page s'ouvre sans réseau (service worker `sw.js`). Les jours en cache s'affichent, avec « 📴 hors connexion — N jour(s) récent(s) indisponible(s) ».
 
 ## Sources de données
 
 - Archives climatiques (chutes de neige, précipitations, températures, hauteur de neige, isotherme 0 °C, vent) : `archive-api.open-meteo.com` (ERA5 / ERA5-Land)
 - Géocodage : `geocoding-api.open-meteo.com`
 - Population (France) : `geo.api.gouv.fr` (INSEE)
+- Géocodage inverse (position GPS → commune) : `nominatim.openstreetmap.org`
 
 ## Notes techniques
 
 - Fichier unique, aucune dépendance serveur — Chart.js chargé depuis un CDN pour le graphique.
+- `sw.js` : service worker (page, Chart.js et polices gardés sur l'appareil pour l'usage hors connexion).
 - Statistiques de visite anonymes et sans cookie avec GoatCounter.
 
 ## Licence
 
-© 2026 Fernand (fef73) — tous droits réservés. Voir le fichier [LICENSE](LICENSE). Les données météo restent soumises aux licences de leurs fournisseurs (Open-Meteo CC BY 4.0, INSEE / Etalab).
+© 2026 Fernand (fef73) — tous droits réservés. Voir le fichier [LICENSE](LICENSE). Les données météo restent soumises aux licences de leurs fournisseurs (Open-Meteo CC BY 4.0, INSEE / Etalab, OpenStreetMap ODbL).
