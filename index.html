@@ -504,6 +504,9 @@
 
   <div class="features-panel" id="features-panel"></div>
 
+  <style>
+    .cache-btn{ font:inherit; color:var(--text-lo); background:none; border:1px solid var(--hairline); border-radius:6px; padding:3px 8px; cursor:pointer; }
+  </style>
   <footer>
     <span id="footer-source-line">Source : archives climatiques Open-Meteo (ERA5, géocodage sans clé API) · Fuseau horaire local à la ville<br>
     Le lien partagé conserve ta ville et ta période</span>
@@ -518,7 +521,10 @@
     </div>
     <div class="cache-line" style="margin-top:12px; font-size:11px; display:flex; gap:10px; justify-content:center; align-items:center; flex-wrap:wrap;">
       <span id="cache-info"></span>
-      <button type="button" id="cache-clear-btn" style="font:inherit; color:var(--text-lo); background:none; border:1px solid var(--hairline); border-radius:6px; padding:3px 8px; cursor:pointer;"></button>
+      <button type="button" id="cache-export-btn" class="cache-btn"></button>
+      <button type="button" id="cache-import-btn" class="cache-btn"></button>
+      <input type="file" id="cache-import-file" accept=".json,application/json" style="display:none">
+      <button type="button" id="cache-clear-btn" class="cache-btn" style="font:inherit; color:var(--text-lo); background:none; border:1px solid var(--hairline); border-radius:6px; padding:3px 8px; cursor:pointer;"></button>
     </div>
     <div class="footer-signature">
       <img src="data:image/jpeg;base64,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" alt="fef73">
@@ -578,6 +584,12 @@ const TRANSLATIONS = {
     cacheInfo: (n) => `💾 Cache local : ${n} jour(s) enregistré(s) sur cet appareil`,
     cacheClear: "Vider le cache",
     cacheCleared: "Cache vidé",
+    cacheExport: "⬇ Enregistrer",
+    cacheImport: "⬆ Restaurer",
+    cacheExported: (n) => `✓ ${n} entrées enregistrées`,
+    cacheImported: (n) => `✓ ${n} entrées restaurées`,
+    cacheImportError: "Fichier invalide",
+    cacheEmpty: "Cache vide",
     gaugeTitle: "Intensité des chutes (jours enneigés)",
     gaugeAvg: (v) => `${v} cm/j neigeux`,
     gaugeAltitude: (m) => ` · altitude ${m} m`,
@@ -686,6 +698,12 @@ const TRANSLATIONS = {
     cacheInfo: (n) => `💾 Local cache: ${n} day(s) stored on this device`,
     cacheClear: "Clear cache",
     cacheCleared: "Cache cleared",
+    cacheExport: "⬇ Save",
+    cacheImport: "⬆ Restore",
+    cacheExported: (n) => `✓ ${n} entries saved`,
+    cacheImported: (n) => `✓ ${n} entries restored`,
+    cacheImportError: "Invalid file",
+    cacheEmpty: "Cache is empty",
     gaugeTitle: "Snowfall intensity (snowy days)",
     gaugeAvg: (v) => `${v} cm/snowy day`,
     gaugeAltitude: (m) => ` · altitude ${m} m`,
@@ -1321,7 +1339,27 @@ const HistCache = (() => {
       }catch(e){ resolve(); }
     });
   }
-  return { place, isStable, getMany, putMany, count, clear };
+  // Sauvegarde / restauration : tout le cache partagé (historique + neige) dans un fichier JSON
+  async function exportAll(){
+    const db = await open(); if(!db) return [];
+    return new Promise((resolve) => {
+      try{ const r = db.transaction(STORE).objectStore(STORE).getAll(); r.onsuccess = () => resolve(r.result || []); r.onerror = () => resolve([]); }
+      catch(e){ resolve([]); }
+    });
+  }
+  async function importAll(entries){ // fusionne : les jours déjà présents sont remplacés
+    const valid = (Array.isArray(entries) ? entries : []).filter(e =>
+      e && typeof e.k === "string" && /^(evo|evo-detail|neige|neige-detail|neige-meta)\|/.test(e.k) && e.v && typeof e.v === "object");
+    const db = await open(); if(!db) return 0;
+    return new Promise((resolve) => {
+      try{
+        const tx = db.transaction(STORE, "readwrite"), st = tx.objectStore(STORE);
+        valid.forEach(e => st.put({ k: e.k, v: e.v }));
+        tx.oncomplete = () => resolve(valid.length); tx.onerror = tx.onabort = () => resolve(0);
+      }catch(e){ resolve(0); }
+    });
+  }
+  return { place, isStable, getMany, putMany, count, clear, exportAll, importAll };
 })();
 
 function datesBetween(start, end){
@@ -1784,7 +1822,38 @@ async function refreshCacheInfo(){
   const n = await HistCache.count("neige");
   document.getElementById("cache-info").textContent = t("cacheInfo", n);
   document.getElementById("cache-clear-btn").textContent = t("cacheClear");
+  document.getElementById("cache-export-btn").textContent = t("cacheExport");
+  document.getElementById("cache-import-btn").textContent = t("cacheImport");
 }
+function flashCacheMsg(text){
+  const el = document.getElementById("cache-info");
+  el.textContent = text;
+  setTimeout(refreshCacheInfo, 3000);
+}
+document.getElementById("cache-export-btn").addEventListener("click", async () => {
+  const entries = await HistCache.exportAll();
+  if(!entries.length){ flashCacheMsg(t("cacheEmpty")); return; }
+  const blob = new Blob([JSON.stringify({ app:"fef73-meteo-cache", version:1, exported:new Date().toISOString(), entries })], { type:"application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `meteo-cache-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  flashCacheMsg(t("cacheExported", entries.length));
+});
+document.getElementById("cache-import-btn").addEventListener("click", () => document.getElementById("cache-import-file").click());
+document.getElementById("cache-import-file").addEventListener("change", async (ev) => {
+  const file = ev.target.files && ev.target.files[0];
+  ev.target.value = "";
+  if(!file) return;
+  try{
+    const data = JSON.parse(await file.text());
+    if(!data || data.app !== "fef73-meteo-cache") throw new Error("format");
+    const n = await HistCache.importAll(data.entries);
+    flashCacheMsg(t("cacheImported", n));
+    if(n) loadAndRender();
+  }catch(e){ flashCacheMsg(t("cacheImportError")); }
+});
 document.getElementById("cache-clear-btn").addEventListener("click", async () => {
   await HistCache.clear(["neige", "neige-detail", "neige-meta"]);
   for(const k in dayDetailsCache) delete dayDetailsCache[k];
