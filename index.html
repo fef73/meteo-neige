@@ -584,6 +584,7 @@ const TRANSLATIONS = {
     cacheInfo: (n) => `💾 Cache local : ${n} jour(s) enregistré(s) sur cet appareil`,
     cacheClear: "Vider le cache",
     cacheCleared: "Cache vidé",
+    offlineNote: (n) => `📴 hors connexion — ${n} jour(s) récent(s) indisponible(s)`,
     cacheExport: "⬇ Enregistrer",
     cacheImport: "⬆ Restaurer",
     cacheExported: (n) => `✓ ${n} entrées enregistrées`,
@@ -698,6 +699,7 @@ const TRANSLATIONS = {
     cacheInfo: (n) => `💾 Local cache: ${n} day(s) stored on this device`,
     cacheClear: "Clear cache",
     cacheCleared: "Cache cleared",
+    offlineNote: (n) => `📴 offline — ${n} recent day(s) unavailable`,
     cacheExport: "⬇ Save",
     cacheImport: "⬆ Restore",
     cacheExported: (n) => `✓ ${n} entries saved`,
@@ -902,7 +904,8 @@ function rerender(){
   renderStats(rows, start, end, useMeasuredDepth, useMeasuredFreezing);
   if(lastRender.updatedAt) document.getElementById("updated-at").textContent =
     t("updatedAt", lastRender.updatedAt.toLocaleTimeString(loc(), {hour:"2-digit", minute:"2-digit"}))
-    + (lastRender.cachedDays ? " · " + t("cachedDays", lastRender.cachedDays) : "");
+    + (lastRender.cachedDays ? " · " + t("cachedDays", lastRender.cachedDays) : "")
+    + (lastRender.offlineMissing ? " · " + t("offlineNote", lastRender.offlineMissing) : "");
 }
 
 // ---------- Geocoding search ----------
@@ -1434,12 +1437,21 @@ async function loadAndRender(){
     allDates.forEach(d => { if(cached[keyOf(d)]) raw[d] = cached[keyOf(d)]; });
     let modelElevation = cached[metaKey] ? cached[metaKey].elevation : null;
     const missing = allDates.filter(d => !raw[d]);
+    let offline = false;
 
     if(missing.length){
       const fetchStart = missing[0], fetchEnd = missing[missing.length - 1];
   const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${currentCity.lat}&longitude=${currentCity.lon}&start_date=${fetchStart}&end_date=${fetchEnd}&daily=snowfall_sum,precipitation_sum,temperature_2m_max,temperature_2m_min,weather_code&hourly=snow_depth,freezing_level_height&timezone=auto${elevationParam}`;
-      const res = await fetch(url);
-      const data = await res.json();
+      // Hors connexion : si une partie de la période est en cache, on l'affiche quand même
+      let data;
+      try{
+        const res = await fetch(url);
+        data = await res.json();
+      }catch(netErr){
+        if(!allDates.some(d => raw[d])) throw netErr;
+        offline = true;
+        data = { daily: { time: [] } };
+      }
       if(myId !== requestId) return;
       if(typeof data.elevation === "number") modelElevation = data.elevation;
 
@@ -1564,7 +1576,8 @@ async function loadAndRender(){
     }
 
     chartStatusEl.style.display = "none";
-    lastRender = { rows, start, end, useMeasuredDepth, useMeasuredFreezing, updatedAt: new Date(), cachedDays };
+    lastRender = { rows, start, end, useMeasuredDepth, useMeasuredFreezing, updatedAt: new Date(), cachedDays,
+      offlineMissing: offline ? allDates.filter(d => !raw[d]).length : 0 };
     setTimeout(refreshCacheInfo, 500);
     rerender();
     syncUrl();
@@ -2063,6 +2076,12 @@ async function reverseGeocode(lat, lon){
 })();
 </script>
 
+<script>
+// Service worker : le site s'ouvre même sans réseau (voir sw.js)
+if("serviceWorker" in navigator){
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
+</script>
 <script data-goatcounter="https://fef73.goatcounter.com/count"
         async src="//gc.zgo.at/count.js"></script>
 </body>
