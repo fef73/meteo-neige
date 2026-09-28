@@ -82,6 +82,10 @@ Site : https://fef73.github.io/meteo-neige/ — accessible aussi depuis le lance
 - `sw.js` : service worker (page, Chart.js et polices gardés sur l'appareil pour l'usage hors connexion).
 - Statistiques de visite anonymes et sans cookie avec GoatCounter.
 
+## Contact
+
+Un bug, une idée, une question ? Le lien **✉️ Contact / suggestion** en bas de chaque page ouvre un court formulaire, sans compte à créer : https://forms.gle/EMZtxMBJCUE6HJXp8
+
 ## Licence
 
 © 2026 Fernand (fef73) — tous droits réservés. Voir le fichier [LICENSE](LICENSE). Les données météo restent soumises aux licences de leurs fournisseurs (Open-Meteo CC BY 4.0, INSEE / Etalab, OpenStreetMap ODbL).
