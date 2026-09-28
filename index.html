@@ -1796,8 +1796,48 @@ document.querySelectorAll(".lang-btn[data-unit]").forEach(btn => {
   btn.addEventListener("click", () => setTempUnit(btn.dataset.unit));
 });
 
-(function init(){
+// Géocodage inverse (OpenStreetMap Nominatim, sans clé) : coordonnées GPS -> commune, région, pays.
+// Délai max 4 s : si le service ne répond pas, on garde "Position GPS".
+async function reverseGeocode(lat, lon){
+  try{
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 4000);
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=13&lat=${lat}&lon=${lon}&accept-language=${lang}`, { signal: ctrl.signal });
+    clearTimeout(timer);
+    if(!r.ok) return null;
+    const a = (await r.json()).address || {};
+    const name = a.village || a.town || a.city || a.municipality || a.hamlet || a.county || "";
+    return { name, admin1: a.state || a.region || "", country: a.country || "" };
+  }catch(e){ return null; }
+}
+
+(async function init(){
   const params = new URLSearchParams(window.location.search);
+
+  // Position transmise par le lanceur / une appli : ?lat=45.27&lon=6.32[&nom=La Toussuire][&alt=1800]
+  const latParam = parseFloat(params.get("lat"));
+  const lonParam = parseFloat(params.get("lon"));
+  if(!isNaN(latParam) && !isNaN(lonParam) && Math.abs(latParam) <= 90 && Math.abs(lonParam) <= 180){
+    const altParam = parseFloat(params.get("alt"));
+    currentCity = {
+      name: params.get("nom") || params.get("ville") || params.get("name") || "Position GPS",
+      admin1: "", country: "",
+      lat: latParam, lon: lonParam,
+      modelElevation: null,
+      elevation: isNaN(altParam) ? null : altParam,
+    };
+    applyStaticTranslations(); // affichage immédiat, puis nom réel dès qu'il arrive
+    const g = await reverseGeocode(latParam, lonParam);
+    if(g){
+      if(currentCity.name === "Position GPS" && g.name) currentCity.name = g.name;
+      currentCity.admin1 = currentCity.admin1 || g.admin1;
+      currentCity.country = currentCity.country || g.country;
+      renderCurrentCity();
+    }
+    loadAndRender();
+    return;
+  }
+
   const c = params.get("c");
   const decoded = c ? decodeState(c) : null;
   if(decoded){
