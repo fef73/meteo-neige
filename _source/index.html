@@ -2330,11 +2330,14 @@ function printPdfSheet(startYear, endYear){
   const safeName = currentCity.name.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^A-Za-z0-9]+/g, "-");
   document.title = t("pdfFileName", safeName, startYear, endYear);
   root.classList.add("pdf-printing");
+  // Sur Android, window.print() ne bloque pas et « afterprint » arrive avant que l'aperçu
+  // soit rendu : on garde donc la fiche active jusqu'au prochain geste de l'utilisateur
+  // (retour sur la page), sinon c'est l'écran qui est imprimé.
   const done = () => {
-    window.removeEventListener("afterprint", done);
-    setTimeout(() => { root.classList.remove("pdf-printing"); document.title = oldTitle; }, 1000);
+    ["pointerdown", "keydown"].forEach(ev => window.removeEventListener(ev, done, true));
+    root.classList.remove("pdf-printing"); document.title = oldTitle;
   };
-  window.addEventListener("afterprint", done);
+  setTimeout(() => ["pointerdown", "keydown"].forEach(ev => window.addEventListener(ev, done, true)), 1500);
   // petit délai : laisse le navigateur mettre en page la fiche avant l'impression
   setTimeout(() => window.print(), 150);
 }
