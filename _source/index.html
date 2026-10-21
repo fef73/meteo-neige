@@ -578,14 +578,14 @@ html.fef73-locked #fef73-lock{display:flex;position:fixed;inset:0;z-index:214748
     .pdf-legend .star{ color:#f0a500; font-style:normal; font-size:10pt; }
     .pdf-legend .bar{ width:14px; height:7px; border-radius:2px; background:#5bb8d6; display:inline-block; }
     .pdf-legend .dash{ width:14px; border-top:1.5px dashed #2f7fb5; display:inline-block; }
-    .pdf-kpis{ display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; }
+    .pdf-kpis{ display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; }
     .pdf-kpi{ border:1px solid #d5dde6; border-left:3px solid #5bb8d6; border-radius:5px; padding:5px 8px; break-inside:avoid; }
     .pdf-kpi .l{ font-family:'IBM Plex Mono', monospace; font-size:7pt; text-transform:uppercase; letter-spacing:.05em; color:#5b6b7c; }
     .pdf-kpi .v{ font-family:'Fraunces', serif; font-weight:600; font-size:13pt; margin:2px 0; }
     .pdf-kpi .s{ font-family:'IBM Plex Mono', monospace; font-size:7.5pt; color:#5b6b7c; }
-    .pdf-table{ width:100%; border-collapse:collapse; font-family:'IBM Plex Mono', monospace; font-size:8.5pt; }
+    .pdf-table{ width:100%; border-collapse:collapse; font-family:'IBM Plex Mono', monospace; font-size:7.8pt; }
     .pdf-table th{ text-align:left; font-size:7.5pt; text-transform:uppercase; letter-spacing:.04em; color:#5b6b7c; border-bottom:1.5px solid #14202e; padding:4px 5px; }
-    .pdf-table td{ border-bottom:1px solid #e3e9ef; padding:4px 5px; }
+    .pdf-table td{ border-bottom:1px solid #e3e9ef; padding:4px 4px; white-space:nowrap; }
     .pdf-table tbody tr:nth-child(odd){ background:#f4f7fa; }
     .pdf-table .num{ text-align:right; }
     .pdf-table .src{ color:#5b6b7c; font-size:7.5pt; }
@@ -689,12 +689,14 @@ const TRANSLATIONS = {
     pdfAltitudeSet: (m) => `altitude ${m} m (précisée)`,
     pdfAltitudeModel: (m) => `altitude ${m} m (modèle)`,
     pdfChartTitle: "Frise des saisons",
-    pdfGroundCol: "Jours neige au sol",
+    pdfGroundCol: "Jours au sol",
+    pdfTotalCol: "Cumul (cm)",
     pdfNoSnow: (s) => `aucune chute ≥ ${s} cm`,
     pdfLegFirst: "1ère chute",
     pdfLegMax: "plus forte chute (taille ∝ hauteur, en cm)",
     pdfLegLast: "dernière chute",
     pdfLegGround: "jours de neige au sol",
+    pdfLegTotal: "cumul des chutes de la saison (cm, avant fonte)",
     pdfLegAvg: "dates moyennes de 1ère / dernière chute",
     pdfSynthTitle: "Synthèse",
     pdfDayUnit: "j",
@@ -706,12 +708,14 @@ const TRANSLATIONS = {
     kpiLongest: "Plus longue période de chutes",
     kpiGround: "Neige au sol — moyenne / saison",
     kpiGroundSub: (a, b) => `de ${a} à ${b} j selon les saisons`,
+    kpiTotal: "Cumul des chutes — moyenne / saison",
+    kpiTotalSub: (a, sa, b, sb) => `de ${a} cm (${sa}) à ${b} cm (${sb})`,
     kpiTrend: "Tendance neige au sol",
     kpiTrendVal: (v) => `${v > 0 ? "+" : ""}${v} j / décennie`,
     kpiTrendSub: "régression linéaire — indicative",
     pdfTableTitle: "Détail par saison",
     thSeason: "Saison", thFirst: "1ère chute", thMax: "Plus forte chute", thLast: "Dernière chute",
-    thDuration: "Durée des chutes", thGround: "Jours au sol", thSource: "Neige au sol",
+    thDuration: "Durée des chutes", thGround: "Jours au sol", thTotal: "Cumul", thSource: "Neige au sol",
     srcMeasuredShort: "mesure", srcEstimatedShort: "estimation",
     pdfIncomplete: "* saison incomplète (plus de 10 % de jours sans données)",
     pdfMethod: (f, s, g) => `1ère chute : ≥ ${f} cm en une journée. Plus forte et dernière chute : ≥ ${s} cm. Jour de neige au sol : hauteur ≥ ${g} cm — mesure ERA5-Land quand elle couvre ≥ 80 % de la saison, sinon modèle degré-jour (estimation). Durée des chutes = de la 1ère à la dernière chute (la neige au sol peut durer plus longtemps).`,
@@ -844,12 +848,14 @@ const TRANSLATIONS = {
     pdfAltitudeSet: (m) => `altitude ${m} m (set)`,
     pdfAltitudeModel: (m) => `altitude ${m} m (model)`,
     pdfChartTitle: "Season timeline",
-    pdfGroundCol: "Days of snow cover",
+    pdfGroundCol: "Snow-cover days",
+    pdfTotalCol: "Total (cm)",
     pdfNoSnow: (s) => `no snowfall ≥ ${s} cm`,
     pdfLegFirst: "first snowfall",
     pdfLegMax: "heaviest snowfall (size ∝ depth, in cm)",
     pdfLegLast: "last snowfall",
     pdfLegGround: "days of snow on the ground",
+    pdfLegTotal: "season snowfall total (cm, before melting)",
     pdfLegAvg: "average first / last snowfall dates",
     pdfSynthTitle: "Summary",
     pdfDayUnit: "d",
@@ -861,12 +867,14 @@ const TRANSLATIONS = {
     kpiLongest: "Longest snowfall span",
     kpiGround: "Snow cover — average / season",
     kpiGroundSub: (a, b) => `from ${a} to ${b} d depending on the season`,
+    kpiTotal: "Snowfall total — average / season",
+    kpiTotalSub: (a, sa, b, sb) => `from ${a} cm (${sa}) to ${b} cm (${sb})`,
     kpiTrend: "Snow cover trend",
     kpiTrendVal: (v) => `${v > 0 ? "+" : ""}${v} d / decade`,
     kpiTrendSub: "linear regression — indicative",
     pdfTableTitle: "Season details",
     thSeason: "Season", thFirst: "First snowfall", thMax: "Heaviest snowfall", thLast: "Last snowfall",
-    thDuration: "Snowfall span", thGround: "Snow-cover days", thSource: "Snow cover",
+    thDuration: "Snowfall span", thGround: "Snow-cover days", thTotal: "Total", thSource: "Snow cover",
     srcMeasuredShort: "measured", srcEstimatedShort: "estimated",
     pdfIncomplete: "* incomplete season (more than 10% of days without data)",
     pdfMethod: (f, s, g) => `First snowfall: ≥ ${f} cm in one day. Heaviest and last snowfall: ≥ ${s} cm. Snow-cover day: depth ≥ ${g} cm — ERA5-Land measurement when it covers ≥ 80% of the season, otherwise degree-day model (estimate). Snowfall span = from first to last snowfall (snow cover can last longer).`,
@@ -2156,10 +2164,11 @@ function computeSeasons(raw, startYear, endYear){
     const avail = days.filter(d => raw[d] && raw[d].snow !== null && raw[d].snow !== undefined);
     const depthN = avail.filter(d => raw[d].depth !== null && raw[d].depth !== undefined).length;
     const measured = avail.length > 0 && depthN / avail.length >= 0.8;
-    let pack = 0, lastMeasured = 0, ground = 0, first = null, last = null, max = null;
+    let pack = 0, lastMeasured = 0, ground = 0, snowTotal = 0, first = null, last = null, max = null;
     avail.forEach(d => {
       const r = raw[d], snow = r.snow || 0;
       pack += snow;
+      snowTotal += snow;
       if(r.max !== null && r.max > 0) pack = Math.max(0, pack - r.max * PDF_MELT_FACTOR);
       let rem;
       if(measured){ if(r.depth !== null && r.depth !== undefined) lastMeasured = r.depth * 100; rem = lastMeasured; }
@@ -2171,7 +2180,7 @@ function computeSeasons(raw, startYear, endYear){
         if(!max || snow > max.cm) max = { date:d, cm:snow };
       }
     });
-    out.push({ y, label: seasonLabel(y), first, max, last, ground,
+    out.push({ y, label: seasonLabel(y), first, max, last, ground, snowTotal,
       duration: first && last ? seasonOffset(last.date, y) - seasonOffset(first.date, y) + 1 : 0,
       nDays: avail.length, total: days.length, measured,
       incomplete: avail.length < days.length * 0.9 });
@@ -2189,11 +2198,12 @@ function starPath(cx, cy, r){
 }
 
 function buildSeasonChartSvg(seasons){
-  const W = 720, rowH = 25, top = 26, L = 62, plotW = 500, barX = L + plotW + 16, barW = 110;
+  const W = 720, rowH = 25, top = 26, L = 62, plotW = 420, barX = L + plotW + 14, barW = 104, cumX = barX + barW + 8, cumW = W - cumX - 2;
   const H = top + seasons.length * rowH + 8;
   const x = off => L + Math.max(0, Math.min(365, off)) / 365 * plotW;
   const maxCm = Math.max(1, ...seasons.map(s => s.max ? s.max.cm : 0));
   const maxGround = Math.max(1, ...seasons.map(s => s.ground));
+  const maxTotal = Math.max(1, ...seasons.map(s => s.snowTotal));
   const withFirst = seasons.filter(s => s.first), withLast = seasons.filter(s => s.last);
   const avgFirst = withFirst.length ? withFirst.reduce((a, s) => a + seasonOffset(s.first.date, s.y), 0) / withFirst.length : null;
   const avgLast = withLast.length ? withLast.reduce((a, s) => a + seasonOffset(s.last.date, s.y), 0) / withLast.length : null;
@@ -2211,6 +2221,7 @@ function buildSeasonChartSvg(seasons){
     }
   }
   g += `<text x="${barX}" y="${top - 10}" font-size="9" fill="#5b6b7c">${escapeHtml(t("pdfGroundCol"))}</text>`;
+  g += `<text x="${cumX}" y="${top - 10}" font-size="9" fill="#5b6b7c">${escapeHtml(t("pdfTotalCol"))}</text>`;
 
 
   // Saisons, la plus récente en haut
@@ -2232,6 +2243,9 @@ function buildSeasonChartSvg(seasons){
     const bw = s.ground / maxGround * (barW - 30);
     g += `<rect x="${barX}" y="${cy - 5}" width="${Math.max(1, bw)}" height="10" rx="2" fill="#5bb8d6"/>`;
     g += `<text x="${barX + bw + 4}" y="${cy + 3.5}" font-size="9" fill="#14202e">${s.ground}</text>`;
+    const cw = s.snowTotal / maxTotal * (cumW - 30);
+    g += `<rect x="${cumX}" y="${cy - 5}" width="${Math.max(1, cw)}" height="10" rx="2" fill="#f0b429"/>`;
+    g += `<text x="${cumX + cw + 4}" y="${cy + 3.5}" font-size="9" fill="#14202e">${Math.round(s.snowTotal)}</text>`;
   });
 
   // Dates moyennes de 1ère / dernière chute (par-dessus les lignes de saisons)
@@ -2263,6 +2277,8 @@ function buildPdfSheet(seasons, modelElevation, startYear, endYear){
   if(ok.length){
     const gd = ok.map(s => s.ground);
     kpis.push([t("kpiGround"), `${Math.round(mean(gd))} ${t("pdfDayUnit")}`, t("kpiGroundSub", Math.min(...gd), Math.max(...gd))]);
+    const most = ok.reduce((a, s) => s.snowTotal > a.snowTotal ? s : a), least = ok.reduce((a, s) => s.snowTotal < a.snowTotal ? s : a);
+    kpis.push([t("kpiTotal"), `${Math.round(mean(ok.map(s => s.snowTotal)))} cm`, t("kpiTotalSub", Math.round(least.snowTotal), least.label, Math.round(most.snowTotal), most.label)]);
     if(ok.length >= 5){
       const xs = ok.map(s => s.y), mx = mean(xs), my = mean(gd);
       const slope = xs.reduce((a, xv, i) => a + (xv - mx) * (gd[i] - my), 0) / xs.reduce((a, xv) => a + (xv - mx) ** 2, 0);
@@ -2284,6 +2300,7 @@ function buildPdfSheet(seasons, modelElevation, startYear, endYear){
       <td>${cell(s.first)}</td><td>${cell(s.max)}</td><td>${cell(s.last)}</td>
       <td class="num">${s.duration ? s.duration + " " + t("pdfDayUnit") : "—"}</td>
       <td class="num"><b>${s.ground}</b></td>
+      <td class="num"><b>${s.nDays ? Math.round(s.snowTotal) + " cm" : "—"}</b></td>
       <td class="src">${s.nDays ? (s.measured ? t("srcMeasuredShort") : t("srcEstimatedShort")) : "—"}</td>
     </tr>`).join("");
 
@@ -2308,6 +2325,7 @@ function buildPdfSheet(seasons, modelElevation, startYear, endYear){
         <span><i class="star">★</i>${escapeHtml(t("pdfLegMax"))}</span>
         <span><i class="dot" style="background:#5a6b7d"></i>${escapeHtml(t("pdfLegLast"))}</span>
         <span><i class="bar"></i>${escapeHtml(t("pdfLegGround"))}</span>
+        <span><i class="bar" style="background:#f0b429"></i>${escapeHtml(t("pdfLegTotal"))}</span>
         <span><i class="dash"></i>${escapeHtml(t("pdfLegAvg"))}</span>
       </div>
       <h2>${escapeHtml(t("pdfSynthTitle"))}</h2>
@@ -2318,7 +2336,7 @@ function buildPdfSheet(seasons, modelElevation, startYear, endYear){
       ${head}
       <h2>${escapeHtml(t("pdfTableTitle"))}</h2>
       <table class="pdf-table">
-        <thead><tr><th>${t("thSeason")}</th><th>${t("thFirst")}</th><th>${t("thMax")}</th><th>${t("thLast")}</th><th class="num">${t("thDuration")}</th><th class="num">${t("thGround")}</th><th>${t("thSource")}</th></tr></thead>
+        <thead><tr><th>${t("thSeason")}</th><th>${t("thFirst")}</th><th>${t("thMax")}</th><th>${t("thLast")}</th><th class="num">${t("thDuration")}</th><th class="num">${t("thGround")}</th><th class="num">${t("thTotal")}</th><th>${t("thSource")}</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
       ${foot}
@@ -2417,7 +2435,7 @@ const FEATURES_CONTENT = {
         <h3>⚙️ Confort d'usage</h3>
         <ul>
           <li>FR/EN, °C/°F (préférences mémorisées), lien partageable (conserve le lieu, l'altitude et la période)</li>
-          <li><b>📄 Fiche PDF</b> : frise des 20 dernières saisons (1er août → 31 juillet) avec 1ère chute (≥3 cm), plus forte et dernière chute (≥1 cm) et jours de neige au sol, synthèse et tableau détaillé — choisir « Enregistrer au format PDF » dans la fenêtre d'impression</li>
+          <li><b>📄 Fiche PDF</b> : frise des 20 dernières saisons (1er août → 31 juillet) avec 1ère chute (≥3 cm), plus forte et dernière chute (≥1 cm) , jours de neige au sol et cumul des chutes, synthèse et tableau détaillé — choisir « Enregistrer au format PDF » dans la fenêtre d'impression</li>
           <li class="f-dim">Les hauteurs de neige restent en cm et les altitudes en m</li>
         </ul>
       </div>
@@ -2460,7 +2478,7 @@ const FEATURES_CONTENT = {
         <h3>⚙️ Convenience</h3>
         <ul>
           <li>FR/EN, °C/°F (preferences remembered), shareable link (keeps the location, altitude and period)</li>
-          <li><b>📄 PDF sheet</b>: timeline of the last 20 seasons (Aug 1 → Jul 31) with first snowfall (≥3 cm), heaviest and last snowfall (≥1 cm) and snow-cover days, summary and detailed table — choose “Save as PDF” in the print dialog</li>
+          <li><b>📄 PDF sheet</b>: timeline of the last 20 seasons (Aug 1 → Jul 31) with first snowfall (≥3 cm), heaviest and last snowfall (≥1 cm) , snow-cover days and snowfall total, summary and detailed table — choose “Save as PDF” in the print dialog</li>
           <li class="f-dim">Snow depths stay in cm and altitudes in m</li>
         </ul>
       </div>
