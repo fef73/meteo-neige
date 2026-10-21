@@ -557,13 +557,14 @@ html.fef73-locked #fef73-lock{display:flex;position:fixed;inset:0;z-index:214748
     /* ---------- Fiche PDF (visible uniquement à l'impression) ---------- */
     #pdf-sheet{ display:none; }
     @media print{
-      @page{ size:A4 portrait; margin:11mm; }
+      @page{ size:A4 portrait; margin:0; }
       html.pdf-printing, html.pdf-printing body{ background:#fff !important; padding:0 !important; min-height:0 !important; }
       html.pdf-printing body > *:not(#pdf-sheet){ display:none !important; }
       html.pdf-printing #pdf-sheet{ display:block !important; }
     }
     #pdf-sheet{ color:#14202e; font-family:'Space Grotesk', sans-serif; font-size:9.5pt; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
     #pdf-sheet *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .pdf-page{ padding:11mm 12mm; box-sizing:border-box; }
     .pdf-break{ break-before:page; page-break-before:always; }
     .pdf-head{ display:flex; justify-content:space-between; align-items:flex-end; gap:12px; border-bottom:2px solid #14202e; padding-bottom:6px; margin-bottom:10px; }
     .pdf-eyebrow{ font-family:'IBM Plex Mono', monospace; font-size:8pt; letter-spacing:.12em; text-transform:uppercase; color:#2f7fb5; }
@@ -710,7 +711,7 @@ const TRANSLATIONS = {
     thDuration: "Durée", thGround: "Jours au sol", thSource: "Neige au sol",
     srcMeasuredShort: "mesure", srcEstimatedShort: "estimation",
     pdfIncomplete: "* saison incomplète (plus de 10 % de jours sans données)",
-    pdfMethod: (s, g) => `Chute retenue : ≥ ${s} cm en une journée. Jour de neige au sol : hauteur ≥ ${g} cm — mesure ERA5-Land quand elle couvre ≥ 80 % de la saison, sinon modèle degré-jour (estimation). Durée = de la 1ère à la dernière chute.`,
+    pdfMethod: (f, s, g) => `1ère chute : ≥ ${f} cm en une journée. Plus forte et dernière chute : ≥ ${s} cm. Jour de neige au sol : hauteur ≥ ${g} cm — mesure ERA5-Land quand elle couvre ≥ 80 % de la saison, sinon modèle degré-jour (estimation). Durée = de la 1ère à la dernière chute.`,
     pdfFileName: (c, a, b) => `Fiche-neige_${c}_${a}-${b}`,
     gaugeTitle: "Intensité des chutes (jours enneigés)",
     gaugeAvg: (v) => `${v} cm/j neigeux`,
@@ -862,7 +863,7 @@ const TRANSLATIONS = {
     thDuration: "Span", thGround: "Snow-cover days", thSource: "Snow cover",
     srcMeasuredShort: "measured", srcEstimatedShort: "estimated",
     pdfIncomplete: "* incomplete season (more than 10% of days without data)",
-    pdfMethod: (s, g) => `Snowfall counted: ≥ ${s} cm in one day. Snow-cover day: depth ≥ ${g} cm — ERA5-Land measurement when it covers ≥ 80% of the season, otherwise degree-day model (estimate). Span = from first to last snowfall.`,
+    pdfMethod: (f, s, g) => `First snowfall: ≥ ${f} cm in one day. Heaviest and last snowfall: ≥ ${s} cm. Snow-cover day: depth ≥ ${g} cm — ERA5-Land measurement when it covers ≥ 80% of the season, otherwise degree-day model (estimate). Span = from first to last snowfall.`,
     pdfFileName: (c, a, b) => `Snow-sheet_${c}_${a}-${b}`,
     gaugeTitle: "Snowfall intensity (snowy days)",
     gaugeAvg: (v) => `${v} cm/snowy day`,
@@ -2092,7 +2093,8 @@ document.getElementById("share-btn").addEventListener("click", async () => {
 // ---------- Fiche PDF « 20 saisons » (frise saisonnière) ----------
 // Saison = 1er août → 31 juillet. Impression via window.print() : choisir « Enregistrer au format PDF ».
 const PDF_SEASONS = 20;
-const PDF_SNOW_CM = 1;     // cm — chute retenue (1ère, plus forte, dernière)
+const PDF_SNOW_CM = 1;     // cm — chute retenue (plus forte, dernière)
+const PDF_FIRST_CM = 3;    // cm — 1ère chute de la saison (écarte les petites chutes précoces d'ERA5)
 const PDF_GROUND_CM = 1;   // cm — jour compté « neige au sol »
 const PDF_MELT_FACTOR = 1.4; // même modèle degré-jour que le graphique principal
 
@@ -2132,8 +2134,8 @@ function computeSeasons(raw, startYear, endYear){
       if(measured){ if(r.depth !== null && r.depth !== undefined) lastMeasured = r.depth * 100; rem = lastMeasured; }
       else rem = pack;
       if(rem >= PDF_GROUND_CM) ground++;
+      if(!first && snow >= PDF_FIRST_CM) first = { date:d, cm:snow };
       if(snow >= PDF_SNOW_CM){
-        if(!first) first = { date:d, cm:snow };
         last = { date:d, cm:snow };
         if(!max || snow > max.cm) max = { date:d, cm:snow };
       }
@@ -2194,7 +2196,7 @@ function buildSeasonChartSvg(seasons){
       g += `<path d="${starPath(xm, cy, r)}" fill="#f0a500" stroke="#b37a00" stroke-width=".6"/>`;
       g += `<text x="${xm}" y="${cy - r - 1.5}" text-anchor="middle" font-size="7.5" font-weight="600" fill="#8a5d00">${fmtNum(s.max.cm, 0)}</text>`;
     } else {
-      g += `<text x="${L + 8}" y="${cy + 3.5}" font-size="9" font-style="italic" fill="#8796a5">${escapeHtml(t("pdfNoSnow", PDF_SNOW_CM))}</text>`;
+      g += `<text x="${L + 8}" y="${cy + 3.5}" font-size="9" font-style="italic" fill="#8796a5">${escapeHtml(t("pdfNoSnow", PDF_FIRST_CM))}</text>`;
     }
     const bw = s.ground / maxGround * (barW - 30);
     g += `<rect x="${barX}" y="${cy - 5}" width="${Math.max(1, bw)}" height="10" rx="2" fill="#5bb8d6"/>`;
@@ -2263,7 +2265,7 @@ function buildPdfSheet(seasons, modelElevation, startYear, endYear){
       </div>
       <div class="pdf-meta pdf-right">${escapeHtml(t("pdfSubtitle", seasonLabel(startYear), seasonLabel(endYear - 1)))}<br>${escapeHtml(t("pdfEdited", today))}</div>
     </div>`;
-  const foot = `<div class="pdf-foot">${escapeHtml(t("pdfMethod", PDF_SNOW_CM, PDF_GROUND_CM))}${seasons.some(s => s.incomplete) ? "<br>" + escapeHtml(t("pdfIncomplete")) : ""}<br>fef73 · claude.ai · Open-Meteo (ERA5 / ERA5-Land)</div>`;
+  const foot = `<div class="pdf-foot">${escapeHtml(t("pdfMethod", PDF_FIRST_CM, PDF_SNOW_CM, PDF_GROUND_CM))}${seasons.some(s => s.incomplete) ? "<br>" + escapeHtml(t("pdfIncomplete")) : ""}<br>fef73 · claude.ai · Open-Meteo (ERA5 / ERA5-Land)</div>`;
 
   document.getElementById("pdf-sheet").innerHTML = `
     <section class="pdf-page">
@@ -2375,7 +2377,7 @@ const FEATURES_CONTENT = {
         <h3>⚙️ Confort d'usage</h3>
         <ul>
           <li>FR/EN, °C/°F (préférences mémorisées), lien partageable (conserve le lieu, l'altitude et la période)</li>
-          <li><b>📄 Fiche PDF</b> : frise des 20 dernières saisons (1er août → 31 juillet) avec 1ère, plus forte et dernière chute (≥1 cm) et jours de neige au sol, synthèse et tableau détaillé — choisir « Enregistrer au format PDF » dans la fenêtre d'impression</li>
+          <li><b>📄 Fiche PDF</b> : frise des 20 dernières saisons (1er août → 31 juillet) avec 1ère chute (≥3 cm), plus forte et dernière chute (≥1 cm) et jours de neige au sol, synthèse et tableau détaillé — choisir « Enregistrer au format PDF » dans la fenêtre d'impression</li>
           <li class="f-dim">Les hauteurs de neige restent en cm et les altitudes en m</li>
         </ul>
       </div>
@@ -2418,7 +2420,7 @@ const FEATURES_CONTENT = {
         <h3>⚙️ Convenience</h3>
         <ul>
           <li>FR/EN, °C/°F (preferences remembered), shareable link (keeps the location, altitude and period)</li>
-          <li><b>📄 PDF sheet</b>: timeline of the last 20 seasons (Aug 1 → Jul 31) with first, heaviest and last snowfall (≥1 cm) and snow-cover days, summary and detailed table — choose “Save as PDF” in the print dialog</li>
+          <li><b>📄 PDF sheet</b>: timeline of the last 20 seasons (Aug 1 → Jul 31) with first snowfall (≥3 cm), heaviest and last snowfall (≥1 cm) and snow-cover days, summary and detailed table — choose “Save as PDF” in the print dialog</li>
           <li class="f-dim">Snow depths stay in cm and altitudes in m</li>
         </ul>
       </div>
