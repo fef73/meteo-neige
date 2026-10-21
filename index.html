@@ -510,6 +510,7 @@ html.fef73-locked #fef73-lock{display:flex;position:fixed;inset:0;z-index:214748
   <div class="toolbar">
     <div id="updated-at"></div>
     <div class="toolbar-right">
+      <button class="btn" id="pdf-btn">📄 Générer fiche PDF</button>
       <button class="btn" id="share-btn">🔗 Copier le lien</button>
       <button class="btn" id="refresh-btn">↻ Actualiser</button>
     </div>
@@ -552,6 +553,42 @@ html.fef73-locked #fef73-lock{display:flex;position:fixed;inset:0;z-index:214748
 
   <style>
     .cache-btn{ font:inherit; color:var(--text-lo); background:none; border:1px solid var(--hairline); border-radius:6px; padding:3px 8px; cursor:pointer; }
+    #pdf-btn:disabled{ opacity:.7; cursor:wait; }
+    /* ---------- Fiche PDF (visible uniquement à l'impression) ---------- */
+    #pdf-sheet{ display:none; }
+    @media print{
+      @page{ size:A4 portrait; margin:11mm; }
+      html.pdf-printing, html.pdf-printing body{ background:#fff !important; padding:0 !important; min-height:0 !important; }
+      html.pdf-printing body > *:not(#pdf-sheet){ display:none !important; }
+      html.pdf-printing #pdf-sheet{ display:block !important; }
+    }
+    #pdf-sheet{ color:#14202e; font-family:'Space Grotesk', sans-serif; font-size:9.5pt; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    #pdf-sheet *{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .pdf-break{ break-before:page; page-break-before:always; }
+    .pdf-head{ display:flex; justify-content:space-between; align-items:flex-end; gap:12px; border-bottom:2px solid #14202e; padding-bottom:6px; margin-bottom:10px; }
+    .pdf-eyebrow{ font-family:'IBM Plex Mono', monospace; font-size:8pt; letter-spacing:.12em; text-transform:uppercase; color:#2f7fb5; }
+    .pdf-head h1{ font-family:'Fraunces', serif; font-style:italic; font-weight:600; font-size:20pt; margin:2px 0; }
+    .pdf-meta{ font-family:'IBM Plex Mono', monospace; font-size:8pt; color:#5b6b7c; }
+    .pdf-right{ text-align:right; white-space:nowrap; flex:none; }
+    #pdf-sheet h2{ font-family:'IBM Plex Mono', monospace; font-size:8.5pt; letter-spacing:.08em; text-transform:uppercase; color:#2f7fb5; margin:10px 0 4px; }
+    .pdf-legend{ display:flex; flex-wrap:wrap; gap:4px 14px; font-family:'IBM Plex Mono', monospace; font-size:7.5pt; color:#5b6b7c; margin-top:4px; }
+    .pdf-legend span{ display:flex; align-items:center; gap:4px; }
+    .pdf-legend .dot{ width:8px; height:8px; border-radius:50%; display:inline-block; }
+    .pdf-legend .star{ color:#f0a500; font-style:normal; font-size:10pt; }
+    .pdf-legend .bar{ width:14px; height:7px; border-radius:2px; background:#5bb8d6; display:inline-block; }
+    .pdf-legend .dash{ width:14px; border-top:1.5px dashed #2f7fb5; display:inline-block; }
+    .pdf-kpis{ display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; }
+    .pdf-kpi{ border:1px solid #d5dde6; border-left:3px solid #5bb8d6; border-radius:5px; padding:5px 8px; break-inside:avoid; }
+    .pdf-kpi .l{ font-family:'IBM Plex Mono', monospace; font-size:7pt; text-transform:uppercase; letter-spacing:.05em; color:#5b6b7c; }
+    .pdf-kpi .v{ font-family:'Fraunces', serif; font-weight:600; font-size:13pt; margin:2px 0; }
+    .pdf-kpi .s{ font-family:'IBM Plex Mono', monospace; font-size:7.5pt; color:#5b6b7c; }
+    .pdf-table{ width:100%; border-collapse:collapse; font-family:'IBM Plex Mono', monospace; font-size:8.5pt; }
+    .pdf-table th{ text-align:left; font-size:7.5pt; text-transform:uppercase; letter-spacing:.04em; color:#5b6b7c; border-bottom:1.5px solid #14202e; padding:4px 5px; }
+    .pdf-table td{ border-bottom:1px solid #e3e9ef; padding:4px 5px; }
+    .pdf-table tbody tr:nth-child(odd){ background:#f4f7fa; }
+    .pdf-table .num{ text-align:right; }
+    .pdf-table .src{ color:#5b6b7c; font-size:7.5pt; }
+    .pdf-foot{ margin-top:10px; font-family:'IBM Plex Mono', monospace; font-size:7pt; color:#8796a5; line-height:1.5; }
   </style>
   <footer>
     <span id="footer-source-line">Source : archives climatiques Open-Meteo (ERA5, géocodage sans clé API) · Fuseau horaire local à la ville<br>
@@ -638,6 +675,43 @@ const TRANSLATIONS = {
     cacheImported: (n) => `✓ ${n} entrées restaurées`,
     cacheImportError: "Fichier invalide",
     cacheEmpty: "Cache vide",
+    // Fiche PDF
+    pdfBtn: "📄 Générer fiche PDF",
+    pdfLoading: (p) => `⏳ 20 saisons… ${p} %`,
+    pdfError: "⚠ Données indisponibles",
+    pdfTitle: "Fiche neige — 20 saisons",
+    pdfSubtitle: (a, b) => `Saisons ${a} à ${b} (1er août → 31 juillet)`,
+    pdfEdited: (d) => `Édité le ${d}`,
+    pdfAltitudeSet: (m) => `altitude ${m} m (précisée)`,
+    pdfAltitudeModel: (m) => `altitude ${m} m (modèle)`,
+    pdfChartTitle: "Frise des saisons",
+    pdfGroundCol: "Jours neige au sol",
+    pdfNoSnow: (s) => `aucune chute ≥ ${s} cm`,
+    pdfLegFirst: "1ère chute",
+    pdfLegMax: "plus forte chute (taille ∝ hauteur, en cm)",
+    pdfLegLast: "dernière chute",
+    pdfLegGround: "jours de neige au sol",
+    pdfLegAvg: "dates moyennes de 1ère / dernière chute",
+    pdfSynthTitle: "Synthèse",
+    pdfDayUnit: "j",
+    kpiAvgFirst: "1ère chute — date moyenne",
+    kpiEarliest: (d) => `la plus précoce : ${d}`,
+    kpiAvgLast: "Dernière chute — date moyenne",
+    kpiLatest: (d) => `la plus tardive : ${d}`,
+    kpiRecord: "Record de chute en un jour",
+    kpiLongest: "Saison la plus longue",
+    kpiGround: "Neige au sol — moyenne / saison",
+    kpiGroundSub: (a, b) => `de ${a} à ${b} j selon les saisons`,
+    kpiTrend: "Tendance neige au sol",
+    kpiTrendVal: (v) => `${v > 0 ? "+" : ""}${v} j / décennie`,
+    kpiTrendSub: "régression linéaire — indicative",
+    pdfTableTitle: "Détail par saison",
+    thSeason: "Saison", thFirst: "1ère chute", thMax: "Plus forte chute", thLast: "Dernière chute",
+    thDuration: "Durée", thGround: "Jours au sol", thSource: "Neige au sol",
+    srcMeasuredShort: "mesure", srcEstimatedShort: "estimation",
+    pdfIncomplete: "* saison incomplète (plus de 10 % de jours sans données)",
+    pdfMethod: (s, g) => `Chute retenue : ≥ ${s} cm en une journée. Jour de neige au sol : hauteur ≥ ${g} cm — mesure ERA5-Land quand elle couvre ≥ 80 % de la saison, sinon modèle degré-jour (estimation). Durée = de la 1ère à la dernière chute.`,
+    pdfFileName: (c, a, b) => `Fiche-neige_${c}_${a}-${b}`,
     gaugeTitle: "Intensité des chutes (jours enneigés)",
     gaugeAvg: (v) => `${v} cm/j neigeux`,
     gaugeAltitude: (m) => ` · altitude ${m} m`,
@@ -753,6 +827,43 @@ const TRANSLATIONS = {
     cacheImported: (n) => `✓ ${n} entries restored`,
     cacheImportError: "Invalid file",
     cacheEmpty: "Cache is empty",
+    // PDF sheet
+    pdfBtn: "📄 Generate PDF sheet",
+    pdfLoading: (p) => `⏳ 20 seasons… ${p}%`,
+    pdfError: "⚠ Data unavailable",
+    pdfTitle: "Snow sheet — 20 seasons",
+    pdfSubtitle: (a, b) => `Seasons ${a} to ${b} (Aug 1 → Jul 31)`,
+    pdfEdited: (d) => `Issued on ${d}`,
+    pdfAltitudeSet: (m) => `altitude ${m} m (set)`,
+    pdfAltitudeModel: (m) => `altitude ${m} m (model)`,
+    pdfChartTitle: "Season timeline",
+    pdfGroundCol: "Days of snow cover",
+    pdfNoSnow: (s) => `no snowfall ≥ ${s} cm`,
+    pdfLegFirst: "first snowfall",
+    pdfLegMax: "heaviest snowfall (size ∝ depth, in cm)",
+    pdfLegLast: "last snowfall",
+    pdfLegGround: "days of snow on the ground",
+    pdfLegAvg: "average first / last snowfall dates",
+    pdfSynthTitle: "Summary",
+    pdfDayUnit: "d",
+    kpiAvgFirst: "First snowfall — average date",
+    kpiEarliest: (d) => `earliest: ${d}`,
+    kpiAvgLast: "Last snowfall — average date",
+    kpiLatest: (d) => `latest: ${d}`,
+    kpiRecord: "One-day snowfall record",
+    kpiLongest: "Longest season",
+    kpiGround: "Snow cover — average / season",
+    kpiGroundSub: (a, b) => `from ${a} to ${b} d depending on the season`,
+    kpiTrend: "Snow cover trend",
+    kpiTrendVal: (v) => `${v > 0 ? "+" : ""}${v} d / decade`,
+    kpiTrendSub: "linear regression — indicative",
+    pdfTableTitle: "Season details",
+    thSeason: "Season", thFirst: "First snowfall", thMax: "Heaviest snowfall", thLast: "Last snowfall",
+    thDuration: "Span", thGround: "Snow-cover days", thSource: "Snow cover",
+    srcMeasuredShort: "measured", srcEstimatedShort: "estimated",
+    pdfIncomplete: "* incomplete season (more than 10% of days without data)",
+    pdfMethod: (s, g) => `Snowfall counted: ≥ ${s} cm in one day. Snow-cover day: depth ≥ ${g} cm — ERA5-Land measurement when it covers ≥ 80% of the season, otherwise degree-day model (estimate). Span = from first to last snowfall.`,
+    pdfFileName: (c, a, b) => `Snow-sheet_${c}_${a}-${b}`,
     gaugeTitle: "Snowfall intensity (snowy days)",
     gaugeAvg: (v) => `${v} cm/snowy day`,
     gaugeAltitude: (m) => ` · altitude ${m} m`,
@@ -913,6 +1024,7 @@ function applyStaticTranslations(){
   setText("date-to-label", "dateTo");
   refreshMonthOptions();
   setText("share-btn", "shareBtn");
+  if(!pdfBusy) setText("pdf-btn", "pdfBtn");
   setText("refresh-btn", "refreshBtn");
   setText("gauge-title", "gaugeTitle");
   if(!lastRender && !chart) setText("chart-status", "chartStatusDefault");
@@ -1455,6 +1567,92 @@ async function fetchDayDetailsRaw(date, elevationParam, mode){
   }
 }
 
+// ---------- Lecture des données brutes (cache local + Open-Meteo) ----------
+// Renvoie { raw: {date: {...}}, modelElevation, offline, cachedDays }. Les jours manquants sont
+// demandés par blocs d'environ 4 ans (requêtes plus légères, progression visible sur 20 ans).
+function addDaysIso(iso, n){ const d = new Date(iso + "T00:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+async function fetchRawDays(allDates, elevationParam, onProgress){
+  const place = HistCache.place(currentCity);
+  const keyOf = d => `neige|${place}|${d}`;
+  const metaKey = `neige-meta|${place}`;
+  const cached = await HistCache.getMany([...allDates.map(keyOf), metaKey]);
+  const raw = {};
+  allDates.forEach(d => { if(cached[keyOf(d)]) raw[d] = cached[keyOf(d)]; });
+  let modelElevation = cached[metaKey] ? cached[metaKey].elevation : null;
+  const missing = allDates.filter(d => !raw[d]);
+  let offline = false;
+
+  const CHUNK_DAYS = 1461;
+  const chunks = [];
+  for(let i = 0; i < missing.length; ){
+    const limit = addDaysIso(missing[i], CHUNK_DAYS - 1);
+    let j = i;
+    while(j + 1 < missing.length && missing[j + 1] <= limit) j++;
+    chunks.push([missing[i], missing[j]]);
+    i = j + 1;
+  }
+  if(onProgress) onProgress(0);
+
+  for(let c = 0; c < chunks.length; c++){
+    const [fetchStart, fetchEnd] = chunks[c];
+    const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${currentCity.lat}&longitude=${currentCity.lon}&start_date=${fetchStart}&end_date=${fetchEnd}&daily=snowfall_sum,precipitation_sum,temperature_2m_max,temperature_2m_min,weather_code&hourly=snow_depth,freezing_level_height&timezone=auto${elevationParam}`;
+    // Hors connexion : si une partie de la période est en cache, on l'affiche quand même
+    let data;
+    try{
+      const res = await fetch(url);
+      data = await res.json();
+      if(data && data.error) throw new Error(data.reason || "API");
+    }catch(netErr){
+      if(!Object.keys(raw).length) throw netErr;
+      offline = true;
+      break;
+    }
+    if(typeof data.elevation === "number") modelElevation = data.elevation;
+
+    if(data.daily && data.daily.time){
+      // Hauteur de neige au sol mesurée (ERA5-Land, en mètres) : on garde la valeur
+      // la plus tardive de chaque journée locale, qui reflète l'état du manteau
+      // neigeux une fois les chutes et la fonte du jour passées.
+      const depthByDate = {};
+      // Isotherme 0°C mesurée : moyenne horaire de la journée.
+      const freezingByDate = {};
+      if(data.hourly && Array.isArray(data.hourly.time)){
+        data.hourly.time.forEach((tm, k) => {
+          const [d, hourPart] = tm.split("T");
+          const hour = parseInt(hourPart, 10);
+          const v = Array.isArray(data.hourly.snow_depth) ? data.hourly.snow_depth[k] : null;
+          if(v !== null && v !== undefined && (!depthByDate[d] || hour >= depthByDate[d].hour)){
+            depthByDate[d] = { hour, value: v };
+          }
+          const f = Array.isArray(data.hourly.freezing_level_height) ? data.hourly.freezing_level_height[k] : null;
+          if(f !== null && f !== undefined){
+            if(!freezingByDate[d]) freezingByDate[d] = { sum:0, count:0 };
+            freezingByDate[d].sum += f;
+            freezingByDate[d].count++;
+          }
+        });
+      }
+      const toCache = [];
+      data.daily.time.forEach((d, k) => {
+        raw[d] = {
+          snow: data.daily.snowfall_sum ? data.daily.snowfall_sum[k] : null,
+          precipitation: data.daily.precipitation_sum ? data.daily.precipitation_sum[k] : null,
+          max: data.daily.temperature_2m_max[k],
+          min: data.daily.temperature_2m_min[k],
+          weatherCode: data.daily.weather_code ? data.daily.weather_code[k] : null,
+          depth: depthByDate[d] ? depthByDate[d].value : null,
+          freezing: freezingByDate[d] ? freezingByDate[d].sum / freezingByDate[d].count : null,
+        };
+        if(HistCache.isStable(d)) toCache.push([keyOf(d), raw[d]]);
+      });
+      if(modelElevation !== null) toCache.push([metaKey, { elevation: modelElevation }]);
+      HistCache.putMany(toCache);
+    }
+    if(onProgress) onProgress((c + 1) / chunks.length);
+  }
+  return { raw, modelElevation, offline, cachedDays: allDates.length - missing.length };
+}
+
 async function loadAndRender(){
   const { start, end } = getRange();
   if(new Date(start) >= new Date(end)){
@@ -1472,77 +1670,10 @@ async function loadAndRender(){
   try{
     const elevationParam = (currentCity.elevation !== null && currentCity.elevation !== undefined && !isNaN(currentCity.elevation))
       ? `&elevation=${currentCity.elevation}` : "";
-    // Données brutes par jour : lues dans le cache local, et seuls les jours manquants
-    // sont demandés à Open-Meteo (voir HistCache).
-    const place = HistCache.place(currentCity);
+    // Données brutes par jour : cache local d'abord, puis seuls les jours manquants (voir fetchRawDays)
     const allDates = datesBetween(start, end);
-    const keyOf = d => `neige|${place}|${d}`;
-    const metaKey = `neige-meta|${place}`;
-    const cached = await HistCache.getMany([...allDates.map(keyOf), metaKey]);
+    const { raw, modelElevation, offline, cachedDays } = await fetchRawDays(allDates, elevationParam);
     if(myId !== requestId) return;
-    const raw = {};
-    allDates.forEach(d => { if(cached[keyOf(d)]) raw[d] = cached[keyOf(d)]; });
-    let modelElevation = cached[metaKey] ? cached[metaKey].elevation : null;
-    const missing = allDates.filter(d => !raw[d]);
-    let offline = false;
-
-    if(missing.length){
-      const fetchStart = missing[0], fetchEnd = missing[missing.length - 1];
-  const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${currentCity.lat}&longitude=${currentCity.lon}&start_date=${fetchStart}&end_date=${fetchEnd}&daily=snowfall_sum,precipitation_sum,temperature_2m_max,temperature_2m_min,weather_code&hourly=snow_depth,freezing_level_height&timezone=auto${elevationParam}`;
-      // Hors connexion : si une partie de la période est en cache, on l'affiche quand même
-      let data;
-      try{
-        const res = await fetch(url);
-        data = await res.json();
-      }catch(netErr){
-        if(!allDates.some(d => raw[d])) throw netErr;
-        offline = true;
-        data = { daily: { time: [] } };
-      }
-      if(myId !== requestId) return;
-      if(typeof data.elevation === "number") modelElevation = data.elevation;
-
-      if(data.daily && data.daily.time){
-        // Hauteur de neige au sol mesurée (ERA5-Land, en mètres) : on garde la valeur
-        // la plus tardive de chaque journée locale, qui reflète l'état du manteau
-        // neigeux une fois les chutes et la fonte du jour passées.
-        const depthByDate = {};
-        // Isotherme 0°C mesurée : moyenne horaire de la journée.
-        const freezingByDate = {};
-        if(data.hourly && Array.isArray(data.hourly.time)){
-          data.hourly.time.forEach((tm, k) => {
-            const [d, hourPart] = tm.split("T");
-            const hour = parseInt(hourPart, 10);
-            const v = Array.isArray(data.hourly.snow_depth) ? data.hourly.snow_depth[k] : null;
-            if(v !== null && v !== undefined && (!depthByDate[d] || hour >= depthByDate[d].hour)){
-              depthByDate[d] = { hour, value: v };
-            }
-            const f = Array.isArray(data.hourly.freezing_level_height) ? data.hourly.freezing_level_height[k] : null;
-            if(f !== null && f !== undefined){
-              if(!freezingByDate[d]) freezingByDate[d] = { sum:0, count:0 };
-              freezingByDate[d].sum += f;
-              freezingByDate[d].count++;
-            }
-          });
-        }
-        const toCache = [];
-        data.daily.time.forEach((d, k) => {
-          raw[d] = {
-            snow: data.daily.snowfall_sum ? data.daily.snowfall_sum[k] : null,
-            precipitation: data.daily.precipitation_sum ? data.daily.precipitation_sum[k] : null,
-            max: data.daily.temperature_2m_max[k],
-            min: data.daily.temperature_2m_min[k],
-            weatherCode: data.daily.weather_code ? data.daily.weather_code[k] : null,
-            depth: depthByDate[d] ? depthByDate[d].value : null,
-            freezing: freezingByDate[d] ? freezingByDate[d].sum / freezingByDate[d].count : null,
-          };
-          if(HistCache.isStable(d)) toCache.push([keyOf(d), raw[d]]);
-        });
-        if(modelElevation !== null) toCache.push([metaKey, { elevation: modelElevation }]);
-        HistCache.putMany(toCache);
-      }
-    }
-    const cachedDays = allDates.length - missing.length;
 
     const dates = allDates.filter(d => raw[d]);
     if(!dates.length){
@@ -1958,6 +2089,253 @@ document.getElementById("share-btn").addEventListener("click", async () => {
   }
 });
 
+// ---------- Fiche PDF « 20 saisons » (frise saisonnière) ----------
+// Saison = 1er août → 31 juillet. Impression via window.print() : choisir « Enregistrer au format PDF ».
+const PDF_SEASONS = 20;
+const PDF_SNOW_CM = 1;     // cm — chute retenue (1ère, plus forte, dernière)
+const PDF_GROUND_CM = 1;   // cm — jour compté « neige au sol »
+const PDF_MELT_FACTOR = 1.4; // même modèle degré-jour que le graphique principal
+
+function pdfSeasonRange(){
+  const lim = isoDate(todayMinusLag());
+  let endYear = parseInt(lim.slice(0, 4), 10);
+  if(lim < `${endYear}-07-31`) endYear--;          // dernière saison complète
+  const startYear = endYear - PDF_SEASONS;
+  return { startYear, endYear, start: `${startYear}-08-01`, end: `${endYear}-07-31` };
+}
+function seasonLabel(y){ return `${y}-${String(y + 1).slice(2)}`; }
+function seasonOffset(iso, y){
+  const [a, b, c] = iso.split("-").map(Number);
+  return Math.round((Date.UTC(a, b - 1, c) - Date.UTC(y, 7, 1)) / 86400000);
+}
+function offsetToDayMonth(off, opts){
+  return new Date(Date.UTC(2001, 7, 1) + Math.round(off) * 86400000)
+    .toLocaleDateString(loc(), Object.assign({ day:"numeric", month:"long", timeZone:"UTC" }, opts || {}));
+}
+function fmtPdfDate(iso){
+  return new Date(iso + "T00:00:00Z").toLocaleDateString(loc(), { day:"numeric", month:"short", year:"2-digit", timeZone:"UTC" });
+}
+
+function computeSeasons(raw, startYear, endYear){
+  const out = [];
+  for(let y = startYear; y < endYear; y++){
+    const days = datesBetween(`${y}-08-01`, `${y + 1}-07-31`);
+    const avail = days.filter(d => raw[d] && raw[d].snow !== null && raw[d].snow !== undefined);
+    const depthN = avail.filter(d => raw[d].depth !== null && raw[d].depth !== undefined).length;
+    const measured = avail.length > 0 && depthN / avail.length >= 0.8;
+    let pack = 0, lastMeasured = 0, ground = 0, first = null, last = null, max = null;
+    avail.forEach(d => {
+      const r = raw[d], snow = r.snow || 0;
+      pack += snow;
+      if(r.max !== null && r.max > 0) pack = Math.max(0, pack - r.max * PDF_MELT_FACTOR);
+      let rem;
+      if(measured){ if(r.depth !== null && r.depth !== undefined) lastMeasured = r.depth * 100; rem = lastMeasured; }
+      else rem = pack;
+      if(rem >= PDF_GROUND_CM) ground++;
+      if(snow >= PDF_SNOW_CM){
+        if(!first) first = { date:d, cm:snow };
+        last = { date:d, cm:snow };
+        if(!max || snow > max.cm) max = { date:d, cm:snow };
+      }
+    });
+    out.push({ y, label: seasonLabel(y), first, max, last, ground,
+      duration: first && last ? seasonOffset(last.date, y) - seasonOffset(first.date, y) + 1 : 0,
+      nDays: avail.length, total: days.length, measured,
+      incomplete: avail.length < days.length * 0.9 });
+  }
+  return out;
+}
+
+function starPath(cx, cy, r){
+  let p = "";
+  for(let i = 0; i < 10; i++){
+    const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.45 : r;
+    p += (i ? "L" : "M") + (cx + rr * Math.cos(a)).toFixed(1) + "," + (cy + rr * Math.sin(a)).toFixed(1);
+  }
+  return p + "Z";
+}
+
+function buildSeasonChartSvg(seasons){
+  const W = 720, rowH = 25, top = 26, L = 62, plotW = 500, barX = L + plotW + 16, barW = 110;
+  const H = top + seasons.length * rowH + 8;
+  const x = off => L + Math.max(0, Math.min(365, off)) / 365 * plotW;
+  const maxCm = Math.max(1, ...seasons.map(s => s.max ? s.max.cm : 0));
+  const maxGround = Math.max(1, ...seasons.map(s => s.ground));
+  const withFirst = seasons.filter(s => s.first), withLast = seasons.filter(s => s.last);
+  const avgFirst = withFirst.length ? withFirst.reduce((a, s) => a + seasonOffset(s.first.date, s.y), 0) / withFirst.length : null;
+  const avgLast = withLast.length ? withLast.reduce((a, s) => a + seasonOffset(s.last.date, s.y), 0) / withLast.length : null;
+  let g = "";
+
+  // Mois (août → juillet)
+  for(let i = 0; i <= 12; i++){
+    const yy = 2001 + (7 + i >= 12 ? 1 : 0), mm = (7 + i) % 12;
+    const off = (Date.UTC(yy, mm, 1) - Date.UTC(2001, 7, 1)) / 86400000;
+    g += `<line x1="${x(off)}" y1="${top - 4}" x2="${x(off)}" y2="${H - 8}" stroke="#e3e9ef" stroke-width="1"/>`;
+    if(i < 12){
+      const lbl = new Date(Date.UTC(yy, mm, 15)).toLocaleDateString(loc(), { month:"short", timeZone:"UTC" });
+      const mid = x(off + 15);
+      g += `<text x="${mid}" y="${top - 10}" text-anchor="middle" font-size="9" fill="#5b6b7c">${escapeHtml(lbl)}</text>`;
+    }
+  }
+  g += `<text x="${barX}" y="${top - 10}" font-size="9" fill="#5b6b7c">${escapeHtml(t("pdfGroundCol"))}</text>`;
+
+
+  // Saisons, la plus récente en haut
+  [...seasons].reverse().forEach((s, i) => {
+    const cy = top + i * rowH + rowH / 2;
+    if(i % 2 === 0) g += `<rect x="0" y="${cy - rowH / 2}" width="${W}" height="${rowH}" fill="#f4f7fa"/>`;
+    g += `<text x="${L - 8}" y="${cy + 3.5}" text-anchor="end" font-size="10" font-weight="600" fill="#14202e">${s.label}${s.incomplete ? "*" : ""}</text>`;
+    if(s.first && s.last){
+      const x1 = x(seasonOffset(s.first.date, s.y)), x2 = x(seasonOffset(s.last.date, s.y));
+      g += `<line x1="${x1}" y1="${cy}" x2="${x2}" y2="${cy}" stroke="#a9d8ee" stroke-width="7" stroke-linecap="round"/>`;
+      g += `<circle cx="${x1}" cy="${cy}" r="4" fill="#2f7fb5"/>`;
+      g += `<circle cx="${x2}" cy="${cy}" r="4" fill="#5a6b7d"/>`;
+      const xm = x(seasonOffset(s.max.date, s.y)), r = 4 + 6 * Math.sqrt(s.max.cm / maxCm);
+      g += `<path d="${starPath(xm, cy, r)}" fill="#f0a500" stroke="#b37a00" stroke-width=".6"/>`;
+      g += `<text x="${xm}" y="${cy - r - 1.5}" text-anchor="middle" font-size="7.5" font-weight="600" fill="#8a5d00">${fmtNum(s.max.cm, 0)}</text>`;
+    } else {
+      g += `<text x="${L + 8}" y="${cy + 3.5}" font-size="9" font-style="italic" fill="#8796a5">${escapeHtml(t("pdfNoSnow", PDF_SNOW_CM))}</text>`;
+    }
+    const bw = s.ground / maxGround * (barW - 30);
+    g += `<rect x="${barX}" y="${cy - 5}" width="${Math.max(1, bw)}" height="10" rx="2" fill="#5bb8d6"/>`;
+    g += `<text x="${barX + bw + 4}" y="${cy + 3.5}" font-size="9" fill="#14202e">${s.ground}</text>`;
+  });
+
+  // Dates moyennes de 1ère / dernière chute (par-dessus les lignes de saisons)
+  [avgFirst, avgLast].forEach(a => {
+    if(a === null) return;
+    g += `<line x1="${x(a)}" y1="${top - 4}" x2="${x(a)}" y2="${H - 8}" stroke="#2f7fb5" stroke-width="1" stroke-dasharray="3,3" opacity=".7"/>`;
+  });
+
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="IBM Plex Mono, monospace">${g}</svg>`;
+}
+
+function buildPdfSheet(seasons, modelElevation, startYear, endYear){
+  const ok = seasons.filter(s => s.nDays);
+  const withFirst = ok.filter(s => s.first);
+  const offs = (arr, k) => arr.map(s => seasonOffset(s[k].date, s.y));
+  const mean = a => a.reduce((x, y) => x + y, 0) / a.length;
+  let kpis = [];
+  if(withFirst.length){
+    const fo = offs(withFirst, "first"), lo = offs(withFirst, "last");
+    const earliest = withFirst[fo.indexOf(Math.min(...fo))];
+    const latest = withFirst[lo.indexOf(Math.max(...lo))];
+    const record = withFirst.reduce((a, s) => s.max.cm > a.max.cm ? s : a);
+    const longest = withFirst.reduce((a, s) => s.duration > a.duration ? s : a);
+    kpis.push([t("kpiAvgFirst"), offsetToDayMonth(mean(fo)), t("kpiEarliest", fmtPdfDate(earliest.first.date))]);
+    kpis.push([t("kpiAvgLast"), offsetToDayMonth(mean(lo)), t("kpiLatest", fmtPdfDate(latest.last.date))]);
+    kpis.push([t("kpiRecord"), `${fmtNum(record.max.cm, 1)} cm`, formatLong(record.max.date)]);
+    kpis.push([t("kpiLongest"), `${longest.duration} ${t("pdfDayUnit")}`, `${longest.label} · ${fmtPdfDate(longest.first.date)} → ${fmtPdfDate(longest.last.date)}`]);
+  }
+  if(ok.length){
+    const gd = ok.map(s => s.ground);
+    kpis.push([t("kpiGround"), `${Math.round(mean(gd))} ${t("pdfDayUnit")}`, t("kpiGroundSub", Math.min(...gd), Math.max(...gd))]);
+    if(ok.length >= 5){
+      const xs = ok.map(s => s.y), mx = mean(xs), my = mean(gd);
+      const slope = xs.reduce((a, xv, i) => a + (xv - mx) * (gd[i] - my), 0) / xs.reduce((a, xv) => a + (xv - mx) ** 2, 0);
+      const dec = Math.round(slope * 10);
+      kpis.push([t("kpiTrend"), t("kpiTrendVal", dec), t("kpiTrendSub")]);
+    }
+  }
+
+  const alt = (currentCity.elevation !== null && currentCity.elevation !== undefined && !isNaN(currentCity.elevation))
+    ? t("pdfAltitudeSet", currentCity.elevation)
+    : (typeof modelElevation === "number" ? t("pdfAltitudeModel", Math.round(modelElevation)) : "");
+  const place = [currentCity.admin1, currentCity.country].filter(Boolean).join(", ");
+  const today = new Date().toLocaleDateString(loc(), { day:"numeric", month:"long", year:"numeric" });
+  const cell = o => o ? `${fmtPdfDate(o.date)} <b>${fmtNum(o.cm, 1)} cm</b>` : "—";
+
+  const rows = [...seasons].reverse().map(s => `
+    <tr>
+      <td><b>${s.label}${s.incomplete ? "*" : ""}</b></td>
+      <td>${cell(s.first)}</td><td>${cell(s.max)}</td><td>${cell(s.last)}</td>
+      <td class="num">${s.duration ? s.duration + " " + t("pdfDayUnit") : "—"}</td>
+      <td class="num"><b>${s.ground}</b></td>
+      <td class="src">${s.nDays ? (s.measured ? t("srcMeasuredShort") : t("srcEstimatedShort")) : "—"}</td>
+    </tr>`).join("");
+
+  const head = `
+    <div class="pdf-head">
+      <div>
+        <div class="pdf-eyebrow">${escapeHtml(t("pdfTitle"))}</div>
+        <h1>${escapeHtml(currentCity.name)}</h1>
+        <div class="pdf-meta">${escapeHtml([place, alt, `${currentCity.lat.toFixed(3)}°, ${currentCity.lon.toFixed(3)}°`].filter(Boolean).join(" · "))}</div>
+      </div>
+      <div class="pdf-meta pdf-right">${escapeHtml(t("pdfSubtitle", seasonLabel(startYear), seasonLabel(endYear - 1)))}<br>${escapeHtml(t("pdfEdited", today))}</div>
+    </div>`;
+  const foot = `<div class="pdf-foot">${escapeHtml(t("pdfMethod", PDF_SNOW_CM, PDF_GROUND_CM))}${seasons.some(s => s.incomplete) ? "<br>" + escapeHtml(t("pdfIncomplete")) : ""}<br>fef73 · claude.ai · Open-Meteo (ERA5 / ERA5-Land)</div>`;
+
+  document.getElementById("pdf-sheet").innerHTML = `
+    <section class="pdf-page">
+      ${head}
+      <h2>${escapeHtml(t("pdfChartTitle"))}</h2>
+      ${buildSeasonChartSvg(seasons)}
+      <div class="pdf-legend">
+        <span><i class="dot" style="background:#2f7fb5"></i>${escapeHtml(t("pdfLegFirst"))}</span>
+        <span><i class="star">★</i>${escapeHtml(t("pdfLegMax"))}</span>
+        <span><i class="dot" style="background:#5a6b7d"></i>${escapeHtml(t("pdfLegLast"))}</span>
+        <span><i class="bar"></i>${escapeHtml(t("pdfLegGround"))}</span>
+        <span><i class="dash"></i>${escapeHtml(t("pdfLegAvg"))}</span>
+      </div>
+      <h2>${escapeHtml(t("pdfSynthTitle"))}</h2>
+      <div class="pdf-kpis">${kpis.map(k => `<div class="pdf-kpi"><div class="l">${escapeHtml(k[0])}</div><div class="v">${escapeHtml(k[1])}</div><div class="s">${escapeHtml(k[2])}</div></div>`).join("")}</div>
+      ${foot}
+    </section>
+    <section class="pdf-page pdf-break">
+      ${head}
+      <h2>${escapeHtml(t("pdfTableTitle"))}</h2>
+      <table class="pdf-table">
+        <thead><tr><th>${t("thSeason")}</th><th>${t("thFirst")}</th><th>${t("thMax")}</th><th>${t("thLast")}</th><th class="num">${t("thDuration")}</th><th class="num">${t("thGround")}</th><th>${t("thSource")}</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      ${foot}
+    </section>`;
+}
+
+function printPdfSheet(startYear, endYear){
+  const root = document.documentElement, oldTitle = document.title;
+  const safeName = currentCity.name.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^A-Za-z0-9]+/g, "-");
+  document.title = t("pdfFileName", safeName, startYear, endYear);
+  root.classList.add("pdf-printing");
+  const done = () => {
+    window.removeEventListener("afterprint", done);
+    setTimeout(() => { root.classList.remove("pdf-printing"); document.title = oldTitle; }, 1000);
+  };
+  window.addEventListener("afterprint", done);
+  // petit délai : laisse le navigateur mettre en page la fiche avant l'impression
+  setTimeout(() => window.print(), 150);
+}
+
+let pdfBusy = false;
+async function generatePdfSheet(){
+  if(pdfBusy) return;
+  pdfBusy = true;
+  const btn = document.getElementById("pdf-btn");
+  btn.disabled = true;
+  btn.textContent = t("pdfLoading", 0);
+  let failed = false;
+  try{
+    const { startYear, endYear, start, end } = pdfSeasonRange();
+    const elevationParam = (currentCity.elevation !== null && currentCity.elevation !== undefined && !isNaN(currentCity.elevation))
+      ? `&elevation=${currentCity.elevation}` : "";
+    const { raw, modelElevation } = await fetchRawDays(datesBetween(start, end), elevationParam,
+      p => { btn.textContent = t("pdfLoading", Math.round(p * 100)); });
+    const seasons = computeSeasons(raw, startYear, endYear);
+    if(!seasons.some(s => s.nDays)) throw new Error("no data");
+    buildPdfSheet(seasons, modelElevation, startYear, endYear);
+    printPdfSheet(startYear, endYear);
+  }catch(e){
+    failed = true;
+    btn.textContent = t("pdfError");
+  }finally{
+    setTimeout(() => { btn.textContent = t("pdfBtn"); }, failed ? 2500 : 0);
+    btn.disabled = false;
+    pdfBusy = false;
+    refreshCacheInfo();
+  }
+}
+document.getElementById("pdf-btn").addEventListener("click", generatePdfSheet);
+
 // ---------- Panneau "Fonctionnement du site" ----------
 const FEATURES_CONTENT = {
   fr: `
@@ -1997,6 +2375,7 @@ const FEATURES_CONTENT = {
         <h3>⚙️ Confort d'usage</h3>
         <ul>
           <li>FR/EN, °C/°F (préférences mémorisées), lien partageable (conserve le lieu, l'altitude et la période)</li>
+          <li><b>📄 Fiche PDF</b> : frise des 20 dernières saisons (1er août → 31 juillet) avec 1ère, plus forte et dernière chute (≥1 cm) et jours de neige au sol, synthèse et tableau détaillé — choisir « Enregistrer au format PDF » dans la fenêtre d'impression</li>
           <li class="f-dim">Les hauteurs de neige restent en cm et les altitudes en m</li>
         </ul>
       </div>
@@ -2039,6 +2418,7 @@ const FEATURES_CONTENT = {
         <h3>⚙️ Convenience</h3>
         <ul>
           <li>FR/EN, °C/°F (preferences remembered), shareable link (keeps the location, altitude and period)</li>
+          <li><b>📄 PDF sheet</b>: timeline of the last 20 seasons (Aug 1 → Jul 31) with first, heaviest and last snowfall (≥1 cm) and snow-cover days, summary and detailed table — choose “Save as PDF” in the print dialog</li>
           <li class="f-dim">Snow depths stay in cm and altitudes in m</li>
         </ul>
       </div>
@@ -2122,6 +2502,8 @@ async function reverseGeocode(lat, lon){
   loadAndRender();
 })();
 </script>
+
+<div id="pdf-sheet"></div>
 
 <script>
 // Service worker : le site s'ouvre même sans réseau (voir sw.js)
