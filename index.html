@@ -680,6 +680,9 @@ const TRANSLATIONS = {
     pdfBtn: "📄 Générer fiche PDF",
     pdfLoading: (p) => `⏳ 20 saisons… ${p} %`,
     pdfError: "⚠ Données indisponibles",
+    pdfWait: (s) => `⏳ Limite API, reprise dans ${s} s…`,
+    pdfIncompleteData: (n) => `${n} jours n'ont pas pu être chargés`,
+    pdfErrorDetail: (m) => `Fiche non générée : les 20 saisons n'ont pas pu être chargées en entier.\n\nDétail : ${m}\n\nRéessaie dans une minute — les blocs déjà chargés sont gardés en cache.`,
     pdfTitle: "Fiche neige — 20 saisons",
     pdfSubtitle: (a, b) => `Saisons ${a} à ${b} (1er août → 31 juillet)`,
     pdfEdited: (d) => `Édité le ${d}`,
@@ -832,6 +835,9 @@ const TRANSLATIONS = {
     pdfBtn: "📄 Generate PDF sheet",
     pdfLoading: (p) => `⏳ 20 seasons… ${p}%`,
     pdfError: "⚠ Data unavailable",
+    pdfWait: (s) => `⏳ API limit, resuming in ${s} s…`,
+    pdfIncompleteData: (n) => `${n} days could not be loaded`,
+    pdfErrorDetail: (m) => `Sheet not generated: the 20 seasons could not be fully loaded.\n\nDetails: ${m}\n\nTry again in a minute — blocks already loaded are kept in the cache.`,
     pdfTitle: "Snow sheet — 20 seasons",
     pdfSubtitle: (a, b) => `Seasons ${a} to ${b} (Aug 1 → Jul 31)`,
     pdfEdited: (d) => `Issued on ${d}`,
@@ -1572,7 +1578,11 @@ async function fetchDayDetailsRaw(date, elevationParam, mode){
 // Renvoie { raw: {date: {...}}, modelElevation, offline, cachedDays }. Les jours manquants sont
 // demandés par blocs d'environ 4 ans (requêtes plus légères, progression visible sur 20 ans).
 function addDaysIso(iso, n){ const d = new Date(iso + "T00:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
-async function fetchRawDays(allDates, elevationParam, onProgress){
+// opts.strict (fiche PDF) : jamais de résultat partiel — un bloc en échec est réessayé
+// (pause d'une minute si Open-Meteo signale sa limite de requêtes), puis l'erreur remonte.
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function fetchRawDays(allDates, elevationParam, onProgress, opts){
+  const strict = !!(opts && opts.strict);
   const place = HistCache.place(currentCity);
   const keyOf = d => `neige|${place}|${d}`;
   const metaKey = `neige-meta|${place}`;
@@ -1583,7 +1593,7 @@ async function fetchRawDays(allDates, elevationParam, onProgress){
   const missing = allDates.filter(d => !raw[d]);
   let offline = false;
 
-  const CHUNK_DAYS = 1461;
+  const CHUNK_DAYS = strict ? 731 : 1461; // blocs plus petits pour la fiche : requêtes moins « lourdes » pour l'API
   const chunks = [];
   for(let i = 0; i < missing.length; ){
     const limit = addDaysIso(missing[i], CHUNK_DAYS - 1);
@@ -1598,13 +1608,34 @@ async function fetchRawDays(allDates, elevationParam, onProgress){
     const [fetchStart, fetchEnd] = chunks[c];
     const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${currentCity.lat}&longitude=${currentCity.lon}&start_date=${fetchStart}&end_date=${fetchEnd}&daily=snowfall_sum,precipitation_sum,temperature_2m_max,temperature_2m_min,weather_code&hourly=snow_depth,freezing_level_height&timezone=auto${elevationParam}`;
     // Hors connexion : si une partie de la période est en cache, on l'affiche quand même
-    let data;
-    try{
-      const res = await fetch(url);
-      data = await res.json();
-      if(data && data.error) throw new Error(data.reason || "API");
-    }catch(netErr){
-      if(!Object.keys(raw).length) throw netErr;
+    let data = null, lastErr = null;
+    const maxAttempts = strict ? 4 : 1;
+    for(let attempt = 1; attempt <= maxAttempts && !data; attempt++){
+      let rateLimited = false;
+      try{
+        const res = await fetch(url);
+        rateLimited = res.status === 429;
+        const json = await res.json();
+        if(!res.ok || (json && json.error)){
+          const reason = (json && json.reason) || `HTTP ${res.status}`;
+          if(/limit/i.test(reason)) rateLimited = true;
+          throw new Error(reason);
+        }
+        data = json;
+      }catch(err){
+        lastErr = err;
+        if(attempt < maxAttempts){
+          const waitS = rateLimited ? 65 : 5;
+          for(let w = waitS; w > 0; w--){
+            if(onProgress) onProgress(c / chunks.length, w);
+            await sleep(1000);
+          }
+        }
+      }
+    }
+    if(!data){
+      // Graphique principal hors connexion : on affiche quand même ce qui est en cache
+      if(strict || !Object.keys(raw).length) throw lastErr || new Error("API");
       offline = true;
       break;
     }
@@ -2320,8 +2351,13 @@ async function generatePdfSheet(){
     const { startYear, endYear, start, end } = pdfSeasonRange();
     const elevationParam = (currentCity.elevation !== null && currentCity.elevation !== undefined && !isNaN(currentCity.elevation))
       ? `&elevation=${currentCity.elevation}` : "";
-    const { raw, modelElevation } = await fetchRawDays(datesBetween(start, end), elevationParam,
-      p => { btn.textContent = t("pdfLoading", Math.round(p * 100)); });
+    const allDates = datesBetween(start, end);
+    const { raw, modelElevation } = await fetchRawDays(allDates, elevationParam,
+      (p, waitS) => { btn.textContent = waitS ? t("pdfWait", waitS) : t("pdfLoading", Math.round(p * 100)); },
+      { strict: true });
+    // Garde-fou : pas de fiche si plus de 5 % des jours manquent
+    const missingDays = allDates.filter(d => !raw[d]).length;
+    if(missingDays > allDates.length * 0.05) throw new Error(t("pdfIncompleteData", missingDays));
     const seasons = computeSeasons(raw, startYear, endYear);
     if(!seasons.some(s => s.nDays)) throw new Error("no data");
     buildPdfSheet(seasons, modelElevation, startYear, endYear);
@@ -2329,6 +2365,7 @@ async function generatePdfSheet(){
   }catch(e){
     failed = true;
     btn.textContent = t("pdfError");
+    alert(t("pdfErrorDetail", (e && e.message) || "?"));
   }finally{
     setTimeout(() => { btn.textContent = t("pdfBtn"); }, failed ? 2500 : 0);
     btn.disabled = false;
