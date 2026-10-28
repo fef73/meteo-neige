@@ -2165,16 +2165,19 @@ async function communeInfo(c){
   try{
     if(!/france/i.test(c.country || "")) return null;
     const gj = async u => { const r = await fetch(u); if(!r.ok) throw new Error("HTTP " + r.status); return r.json(); };
-    const l = await gj(`https://geo.api.gouv.fr/communes?lat=${c.lat}&lon=${c.lon}&fields=code&format=json`);
-    if(!l.length) return null;
     if(!COMMUNES) COMMUNES = await gj(OFFRES + "communes.json?v=" + Date.now()).catch(() => ({}));
-    const conf = COMMUNES[l[0].code] || {};
+    // d'abord par le nom (une station peut être hors des limites de sa commune), sinon par la position
+    const norm = x => String(x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    const parNom = Object.keys(COMMUNES).filter(k => norm(COMMUNES[k].nom || COMMUNES[k].commune) === norm(c.name));
+    let code = parNom.length === 1 ? parNom[0] : null;
+    if(!code){ const l = await gj(`https://geo.api.gouv.fr/communes?lat=${c.lat}&lon=${c.lon}&fields=code&format=json`); if(!l.length) return null; code = l[0].code; }
+    const conf = COMMUNES[code] || {};
     let logo = null;
     if(conf.logo){
       const src = /^(data:|https?:)/.test(conf.logo) ? conf.logo : OFFRES + conf.logo;
       logo = await new Promise(ok => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => ok(src); im.onerror = () => ok(null); im.src = src; }); // préchargé en CORS : dessinable dans le canvas du PDF
     }
-    return { code: l[0].code, logo, mention: conf.mention && !/test/i.test(conf.mention) ? conf.mention : "" };
+    return { code, logo, mention: conf.mention && !/test/i.test(conf.mention) ? conf.mention : "" };
   }catch(e){ return null; }
 }
 
@@ -2476,6 +2479,7 @@ async function renderPdfFromSheet(startYear, endYear){
     // En-tête : titre à gauche, logo + saisons à droite, alignés en bas
     const head = sec.querySelector(".pdf-head"), left = head.children[0], right = head.querySelector(".pdf-right");
     const logo = right.querySelector("img.pdf-logo"), rl = lines(right);
+    if(logo && !(logo.complete && logo.naturalWidth)) await new Promise(r => { logo.onload = logo.onerror = r; setTimeout(r, 5000); });
     c.font = `${8 * PT}px ${MONO}`; const rw = Math.max(0, ...rl.map(l => c.measureText(l).width));
     let lgW = 0, lgH = 0;
     if(logo && logo.complete && logo.naturalWidth){ const k = Math.min(42 * MM / logo.naturalWidth, 17 * MM / logo.naturalHeight); lgW = logo.naturalWidth * k; lgH = logo.naturalHeight * k; }
