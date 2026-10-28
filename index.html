@@ -184,6 +184,19 @@
   .btn:hover{border-color:var(--live);}
   .btn:active{transform:scale(.97);}
   #updated-at{font-family:'IBM Plex Mono', monospace; font-size:11.5px; color:var(--text-lo);}
+  /* Fiche PDF : confirmation, puis aperçu sous la barre de boutons */
+  .pdf-panel{ background:var(--bg-panel); border:1px solid var(--hairline); border-radius:16px; padding:16px 18px; margin-bottom:14px; }
+  .pdf-panel[hidden]{ display:none; }
+  .pdf-ask p{ margin:0 0 12px; font-size:14px; line-height:1.55; }
+  .pdf-ask .pdf-ask-btns{ display:flex; gap:8px; flex-wrap:wrap; }
+  .btn.btn-main{ background:var(--live); color:#06202b; border-color:var(--live); font-weight:600; }
+  .pdf-status{ font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--live); margin:10px 0 0; min-height:1.2em; white-space:pre-line; }
+  .pdf-status.err{ color:var(--danger); }
+  .pdf-actions{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:4px 0 14px; }
+  .pdf-actions .btn{ text-decoration:none; }
+  .pdf-actions .pdf-file{ font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--text-lo); }
+  .pdf-pages{ display:flex; flex-direction:column; gap:14px; }
+  .pdf-pages img{ width:100%; max-width:800px; border-radius:6px; box-shadow:0 6px 24px rgba(0,0,0,.45); background:#fff; }
 
   .panel{
     background:var(--bg-panel); border:1px solid var(--hairline); border-radius:16px;
@@ -516,6 +529,12 @@ html.fef73-locked #fef73-lock{display:flex;position:fixed;inset:0;z-index:214748
     </div>
   </div>
 
+  <div class="pdf-panel" id="pdf-panel" hidden>
+    <div class="pdf-ask" id="pdf-ask"></div>
+    <div class="pdf-status" id="pdf-status"></div>
+    <div id="pdf-out"></div>
+  </div>
+
   <div class="gauge-panel" id="gauge-panel" style="display:none;">
     <div class="gauge-top">
       <span class="gauge-title" id="gauge-title">Intensité des chutes (jours enneigés)</span>
@@ -722,6 +741,10 @@ const TRANSLATIONS = {
     pdfIncomplete: "* saison incomplète (plus de 10 % de jours sans données)",
     pdfMethod: (f, s, g) => `1ère chute : ≥ ${f} cm en une journée. Plus forte et dernière chute : ≥ ${s} cm. Jour de neige au sol : hauteur ≥ ${g} cm — mesure ERA5-Land quand elle couvre ≥ 80 % de la saison, sinon modèle degré-jour (estimation). Durée des chutes = de la 1ère à la dernière chute (la neige au sol peut durer plus longtemps).`,
     pdfFileName: (c, a, b) => `Fiche-neige_${c}_${a}-${b}`,
+    pdfAsk: (n, alt, a, b) => `Générer la <b>fiche neige — 20 saisons</b> de <b>${n}</b> · ${alt} · saisons ${a} à ${b} ?<br><span style="color:var(--text-lo);font-size:12.5px">Le chargement de 20 ans de données peut prendre jusqu'à une minute. La fiche s'affichera ici, prête à télécharger.</span>`,
+    pdfAskAltAuto: "altitude du terrain",
+    pdfGo: "📄 Générer la fiche", pdfCancel: "Annuler", pdfRedo: "↻ Régénérer",
+    pdfBuilding: "Mise en page de la fiche…", pdfDl: "⬇️ Télécharger le PDF", pdfShare: "📤 Partager", pdfClose: "✕ Fermer", pdfKb: "Ko",
     gaugeTitle: "Intensité des chutes (jours enneigés)",
     gaugeAvg: (v) => `${v} cm/j neigeux`,
     gaugeAltitude: (m) => ` · altitude ${m} m`,
@@ -881,6 +904,10 @@ const TRANSLATIONS = {
     pdfIncomplete: "* incomplete season (more than 10% of days without data)",
     pdfMethod: (f, s, g) => `First snowfall: ≥ ${f} cm in one day. Heaviest and last snowfall: ≥ ${s} cm. Snow-cover day: depth ≥ ${g} cm — ERA5-Land measurement when it covers ≥ 80% of the season, otherwise degree-day model (estimate). Snowfall span = from first to last snowfall (snow cover can last longer).`,
     pdfFileName: (c, a, b) => `Snow-sheet_${c}_${a}-${b}`,
+    pdfAsk: (n, alt, a, b) => `Generate the <b>snow sheet — 20 seasons</b> for <b>${n}</b> · ${alt} · seasons ${a} to ${b}?<br><span style="color:var(--text-lo);font-size:12.5px">Loading 20 years of data can take up to a minute. The sheet will be shown here, ready to download.</span>`,
+    pdfAskAltAuto: "terrain elevation",
+    pdfGo: "📄 Generate the sheet", pdfCancel: "Cancel", pdfRedo: "↻ Regenerate",
+    pdfBuilding: "Laying out the sheet…", pdfDl: "⬇️ Download PDF", pdfShare: "📤 Share", pdfClose: "✕ Close", pdfKb: "KB",
     gaugeTitle: "Snowfall intensity (snowy days)",
     gaugeAvg: (v) => `${v} cm/snowy day`,
     gaugeAltitude: (m) => ` · altitude ${m} m`,
@@ -2145,7 +2172,7 @@ async function communeInfo(c){
     let logo = null;
     if(conf.logo){
       const src = /^(data:|https?:)/.test(conf.logo) ? conf.logo : OFFRES + conf.logo;
-      logo = await new Promise(ok => { const im = new Image(); im.onload = () => ok(src); im.onerror = () => ok(null); im.src = src; }); // préchargé : prêt pour l'impression
+      logo = await new Promise(ok => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => ok(src); im.onerror = () => ok(null); im.src = src; }); // préchargé en CORS : dessinable dans le canvas du PDF
     }
     return { code: l[0].code, logo, mention: conf.mention && !/test/i.test(conf.mention) ? conf.mention : "" };
   }catch(e){ return null; }
@@ -2334,7 +2361,7 @@ function buildPdfSheet(seasons, modelElevation, startYear, endYear, com){
         ${com && com.mention ? `<div class="pdf-mention">${escapeHtml(com.mention)}</div>` : ""}
         <div class="pdf-meta">${escapeHtml([place, alt, `${currentCity.lat.toFixed(3)}°, ${currentCity.lon.toFixed(3)}°`].filter(Boolean).join(" · "))}</div>
       </div>
-      <div class="pdf-meta pdf-right">${com && com.logo ? `<img class="pdf-logo" src="${escapeHtml(com.logo)}" alt="">` : ""}${escapeHtml(t("pdfSubtitle", seasonLabel(startYear), seasonLabel(endYear - 1)))}<br>${escapeHtml(t("pdfEdited", today))}</div>
+      <div class="pdf-meta pdf-right">${com && com.logo ? `<img class="pdf-logo" crossorigin="anonymous" src="${escapeHtml(com.logo)}" alt="">` : ""}${escapeHtml(t("pdfSubtitle", seasonLabel(startYear), seasonLabel(endYear - 1)))}<br>${escapeHtml(t("pdfEdited", today))}</div>
     </div>`;
   const foot = `<div class="pdf-foot">${escapeHtml(t("pdfMethod", PDF_FIRST_CM, PDF_SNOW_CM, PDF_GROUND_CM))}${seasons.some(s => s.incomplete) ? "<br>" + escapeHtml(t("pdfIncomplete")) : ""}<br>fef73 · claude.ai · Open-Meteo (ERA5 / ERA5-Land)</div>`;
 
@@ -2366,23 +2393,6 @@ function buildPdfSheet(seasons, modelElevation, startYear, endYear, com){
     </section>`;
 }
 
-function printPdfSheet(startYear, endYear){
-  const root = document.documentElement, oldTitle = document.title;
-  const safeName = currentCity.name.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^A-Za-z0-9]+/g, "-");
-  document.title = t("pdfFileName", safeName, startYear, endYear);
-  root.classList.add("pdf-printing");
-  // Sur Android, window.print() ne bloque pas et « afterprint » arrive avant que l'aperçu
-  // soit rendu : on garde donc la fiche active jusqu'au prochain geste de l'utilisateur
-  // (retour sur la page), sinon c'est l'écran qui est imprimé.
-  const done = () => {
-    ["pointerdown", "keydown"].forEach(ev => window.removeEventListener(ev, done, true));
-    root.classList.remove("pdf-printing"); document.title = oldTitle;
-  };
-  setTimeout(() => ["pointerdown", "keydown"].forEach(ev => window.addEventListener(ev, done, true)), 1500);
-  // petit délai : laisse le navigateur mettre en page la fiche avant l'impression
-  setTimeout(() => window.print(), 150);
-}
-
 let pdfBusy = false;
 async function generatePdfSheet(){
   if(pdfBusy) return;
@@ -2390,6 +2400,9 @@ async function generatePdfSheet(){
   const btn = document.getElementById("pdf-btn");
   btn.disabled = true;
   btn.textContent = t("pdfLoading", 0);
+  const st = document.getElementById("pdf-status");
+  st.className = "pdf-status"; st.textContent = t("pdfLoading", 0);
+  document.getElementById("pdf-ask").innerHTML = ""; document.getElementById("pdf-out").innerHTML = "";
   let failed = false;
   try{
     const { startYear, endYear, start, end } = pdfSeasonRange();
@@ -2398,7 +2411,7 @@ async function generatePdfSheet(){
     const allDates = datesBetween(start, end);
     const comP = communeInfo(currentCity);
     const { raw, modelElevation } = await fetchRawDays(allDates, elevationParam,
-      (p, waitS) => { btn.textContent = waitS ? t("pdfWait", waitS) : t("pdfLoading", Math.round(p * 100)); },
+      (p, waitS) => { btn.textContent = st.textContent = waitS ? t("pdfWait", waitS) : t("pdfLoading", Math.round(p * 100)); },
       { strict: true });
     // Garde-fou : pas de fiche si plus de 5 % des jours manquent
     const missingDays = allDates.filter(d => !raw[d]).length;
@@ -2406,11 +2419,14 @@ async function generatePdfSheet(){
     const seasons = computeSeasons(raw, startYear, endYear);
     if(!seasons.some(s => s.nDays)) throw new Error("no data");
     buildPdfSheet(seasons, modelElevation, startYear, endYear, await comP);
-    printPdfSheet(startYear, endYear);
+    st.textContent = t("pdfBuilding");
+    await renderPdfFromSheet(startYear, endYear);
+    st.textContent = "";
   }catch(e){
     failed = true;
     btn.textContent = t("pdfError");
-    alert(t("pdfErrorDetail", (e && e.message) || "?"));
+    st.className = "pdf-status err"; st.textContent = t("pdfErrorDetail", (e && e.message) || "?");
+    pdfAskButtons(true);
   }finally{
     setTimeout(() => { btn.textContent = t("pdfBtn"); }, failed ? 2500 : 0);
     btn.disabled = false;
@@ -2418,7 +2434,199 @@ async function generatePdfSheet(){
     refreshCacheInfo();
   }
 }
-document.getElementById("pdf-btn").addEventListener("click", generatePdfSheet);
+// Bouton « Générer fiche PDF » : on demande d'abord, la fiche s'affiche ensuite sous la barre
+function pdfAskButtons(retry){
+  const ask = document.getElementById("pdf-ask");
+  ask.innerHTML = `<div class="pdf-ask-btns"><button class="btn btn-main" id="pdf-go">${escapeHtml(retry ? t("pdfRedo") : t("pdfGo"))}</button><button class="btn" id="pdf-cancel">${escapeHtml(t("pdfCancel"))}</button></div>`;
+  document.getElementById("pdf-go").onclick = generatePdfSheet;
+  document.getElementById("pdf-cancel").onclick = () => { document.getElementById("pdf-panel").hidden = true; };
+}
+function askPdf(){
+  if(pdfBusy) return;
+  const panel = document.getElementById("pdf-panel"), { startYear, endYear } = pdfSeasonRange();
+  const alt = (currentCity.elevation !== null && currentCity.elevation !== undefined && !isNaN(currentCity.elevation))
+    ? t("pdfAltitudeSet", currentCity.elevation) : t("pdfAskAltAuto");
+  panel.hidden = false;
+  document.getElementById("pdf-status").textContent = ""; document.getElementById("pdf-out").innerHTML = "";
+  pdfAskButtons(false);
+  document.getElementById("pdf-ask").insertAdjacentHTML("afterbegin", `<p>${t("pdfAsk", escapeHtml(currentCity.name), escapeHtml(alt), seasonLabel(startYear), seasonLabel(endYear - 1))}</p>`);
+  panel.scrollIntoView({ behavior:"smooth", block:"nearest" });
+}
+document.getElementById("pdf-btn").addEventListener("click", askPdf);
+
+// ---------- Fiche PDF sans bibliothèque : la fiche HTML (#pdf-sheet) est redessinée en canvas (A4, 200 dpi),
+// chaque page est intégrée en JPEG dans un fichier PDF minimal, puis affichée sous la barre.
+const PDF_W = 1654, PDF_H = 2339, PT = 200 / 72, CP = 200 / 96, MM = 200 / 25.4;
+let pdfURL = null, pdfImgs = [];
+async function renderPdfFromSheet(startYear, endYear){
+  try{ await Promise.all(["italic 600 56px Fraunces", "600 36px Fraunces", "22px 'IBM Plex Mono'", "600 22px 'IBM Plex Mono'", "700 25px 'Space Grotesk'"].map(f => document.fonts.load(f))); }catch(e){}
+  const MONO = "'IBM Plex Mono', monospace", SANS = "'Space Grotesk', sans-serif", SERIF = "Fraunces, serif";
+  const X0 = 12 * MM, X1 = PDF_W - 12 * MM, W = X1 - X0;
+  const pages = [];
+  for(const sec of document.querySelectorAll("#pdf-sheet .pdf-page")){
+    const cv = document.createElement("canvas"); cv.width = PDF_W; cv.height = PDF_H;
+    const c = cv.getContext("2d"); c.fillStyle = "#fff"; c.fillRect(0, 0, PDF_W, PDF_H); pages.push(cv);
+    const LS = v => { if("letterSpacing" in c) c.letterSpacing = v + "px"; };
+    const wrap = (str, font, maxW) => { c.font = font; const out = []; let line = "";
+      for(const w of String(str).split(/\s+/).filter(Boolean)){ const tst = line ? line + " " + w : w; if(c.measureText(tst).width > maxW && line){ out.push(line); line = w; } else line = tst; }
+      if(line) out.push(line); return out; };
+    const lines = (el) => el.innerHTML.split(/<br\s*\/?>/i).map(h => { const d = document.createElement("div"); d.innerHTML = h; d.querySelectorAll("img").forEach(i => i.remove()); return d.textContent.replace(/\s+/g, " ").trim(); }).filter(Boolean);
+    let y = 11 * MM;
+
+    // En-tête : titre à gauche, logo + saisons à droite, alignés en bas
+    const head = sec.querySelector(".pdf-head"), left = head.children[0], right = head.querySelector(".pdf-right");
+    const logo = right.querySelector("img.pdf-logo"), rl = lines(right);
+    c.font = `${8 * PT}px ${MONO}`; const rw = Math.max(0, ...rl.map(l => c.measureText(l).width));
+    let lgW = 0, lgH = 0;
+    if(logo && logo.complete && logo.naturalWidth){ const k = Math.min(42 * MM / logo.naturalWidth, 17 * MM / logo.naturalHeight); lgW = logo.naturalWidth * k; lgH = logo.naturalHeight * k; }
+    const LW = W - Math.max(rw, lgW) - 12 * CP;
+    const eyebrow = left.querySelector(".pdf-eyebrow").textContent, h1 = left.querySelector("h1").textContent;
+    const men = left.querySelector(".pdf-mention"), menL = men ? wrap(men.textContent, `700 ${9 * PT}px ${SANS}`, LW) : [];
+    const metaL = wrap(left.querySelector(".pdf-meta").textContent, `${8 * PT}px ${MONO}`, LW);
+    const leftH = 8 * PT * 1.5 + 20 * PT * 1.3 + menL.length * 9 * PT * 1.4 + metaL.length * 8 * PT * 1.45;
+    const rightH = (lgH ? lgH + 4 * CP : 0) + rl.length * 8 * PT * 1.45;
+    const HH = Math.max(leftH, rightH);
+    let ly = y + HH - leftH;
+    c.textAlign = "left"; c.font = `${8 * PT}px ${MONO}`; c.fillStyle = "#2f7fb5"; LS(8 * PT * .12); c.fillText(eyebrow.toUpperCase(), X0, ly + 8 * PT); LS(0); ly += 8 * PT * 1.5;
+    c.font = `italic 600 ${20 * PT}px ${SERIF}`; c.fillStyle = "#14202e"; c.fillText(h1, X0, ly + 20 * PT * .95); ly += 20 * PT * 1.3;
+    menL.forEach(l => { c.font = `700 ${9 * PT}px ${SANS}`; c.fillStyle = "#1d4e7a"; c.fillText(l, X0, ly + 9 * PT); ly += 9 * PT * 1.4; });
+    metaL.forEach(l => { c.font = `${8 * PT}px ${MONO}`; c.fillStyle = "#5b6b7c"; c.fillText(l, X0, ly + 8 * PT); ly += 8 * PT * 1.45; });
+    let ry = y + HH - rightH;
+    if(lgH){ c.drawImage(logo, X1 - lgW, ry, lgW, lgH); ry += lgH + 4 * CP; }
+    c.textAlign = "right"; c.font = `${8 * PT}px ${MONO}`; c.fillStyle = "#5b6b7c";
+    rl.forEach(l => { c.fillText(l, X1, ry + 8 * PT); ry += 8 * PT * 1.45; });
+    c.textAlign = "left";
+    y += HH + 6 * CP; c.fillStyle = "#14202e"; c.fillRect(X0, y, W, 2 * CP); y += 2 * CP + 10 * CP;
+
+    // Contenu, dans l'ordre de la fiche HTML
+    for(const el of [...sec.children].slice(1)){
+      if(el.tagName === "H2"){
+        y += 10 * CP; c.font = `${8.5 * PT}px ${MONO}`; c.fillStyle = "#2f7fb5"; LS(8.5 * PT * .08); c.fillText(el.textContent.toUpperCase(), X0, y + 8.5 * PT); LS(0); y += 8.5 * PT * 1.3 + 4 * CP;
+      } else if(el.tagName.toLowerCase() === "svg"){
+        const vb = el.viewBox.baseVal, h = W * vb.height / vb.width;
+        const src = el.outerHTML.replace('width="100%"', `width="${W}" height="${h}"`).replace(/font-family="[^"]*"/, 'font-family="IBM Plex Mono, Consolas, Menlo, DejaVu Sans Mono, monospace"');
+        const url = URL.createObjectURL(new Blob([src], { type:"image/svg+xml" }));
+        try{ const im = await new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = ko; i.src = url; }); c.drawImage(im, X0, y, W, h); }
+        finally{ URL.revokeObjectURL(url); }
+        y += h;
+      } else if(el.classList.contains("pdf-legend")){
+        y += 4 * CP; const fs = 7.5 * PT, lh = fs * 1.6; let x = X0;
+        c.font = `${fs}px ${MONO}`;
+        for(const sp of el.querySelectorAll(":scope > span")){
+          const i = sp.querySelector("i"), txt = sp.textContent.replace(i ? i.textContent : "", "").trim(), mw = 18 * CP, w = mw + 4 * CP + c.measureText(txt).width;
+          if(x + w > X1){ x = X0; y += lh; }
+          const cy = y + lh / 2, bg = i && i.style.background;
+          if(i && i.classList.contains("dot")){ c.fillStyle = bg || "#2f7fb5"; c.beginPath(); c.arc(x + 4 * CP, cy, 4 * CP, 0, 7); c.fill(); }
+          else if(i && i.classList.contains("star")){ c.fillStyle = "#f0a500"; c.font = `${10 * PT}px ${SANS}`; c.fillText("★", x, cy + 10 * PT * .35); c.font = `${fs}px ${MONO}`; }
+          else if(i && i.classList.contains("bar")){ c.fillStyle = bg || "#5bb8d6"; c.fillRect(x, cy - 3.5 * CP, 14 * CP, 7 * CP); }
+          else if(i && i.classList.contains("dash")){ c.strokeStyle = "#2f7fb5"; c.lineWidth = 1.5 * CP; c.setLineDash([4 * CP, 3 * CP]); c.beginPath(); c.moveTo(x, cy); c.lineTo(x + 14 * CP, cy); c.stroke(); c.setLineDash([]); }
+          c.fillStyle = "#5b6b7c"; c.fillText(txt, x + mw + 4 * CP, cy + fs * .35);
+          x += w + 14 * CP;
+        }
+        y += lh;
+      } else if(el.classList.contains("pdf-kpis")){
+        const n = 4, gap = 6 * CP, bw = (W - gap * (n - 1)) / n, pad = 8 * CP, tw = bw - pad * 2 - 3 * CP;
+        const boxes = [...el.children].map(k => ({
+          l: wrap(k.querySelector(".l").textContent.toUpperCase(), `${7 * PT}px ${MONO}`, tw),
+          v: k.querySelector(".v").textContent,
+          s: wrap(k.querySelector(".s").textContent, `${7.5 * PT}px ${MONO}`, tw) }));
+        for(let r = 0; r < boxes.length; r += n){
+          const row = boxes.slice(r, r + n);
+          const hOf = b => 5 * CP * 2 + b.l.length * 7 * PT * 1.35 + 13 * PT * 1.35 + b.s.length * 7.5 * PT * 1.35;
+          const rh = Math.max(...row.map(hOf));
+          row.forEach((b, i) => {
+            const x = X0 + i * (bw + gap);
+            c.strokeStyle = "#d5dde6"; c.lineWidth = 1 * CP; c.beginPath(); c.roundRect ? c.roundRect(x, y, bw, rh, 5 * CP) : c.rect(x, y, bw, rh); c.stroke();
+            c.fillStyle = "#5bb8d6"; c.fillRect(x, y + 1, 3 * CP, rh - 2);
+            let ty = y + 5 * CP; const tx = x + 3 * CP + pad;
+            c.fillStyle = "#5b6b7c"; c.font = `${7 * PT}px ${MONO}`; LS(7 * PT * .05); b.l.forEach(l => { c.fillText(l, tx, ty + 7 * PT); ty += 7 * PT * 1.35; }); LS(0);
+            c.font = `600 ${13 * PT}px ${SERIF}`; c.fillStyle = "#14202e";
+            const vw = c.measureText(b.v).width; if(vw > tw) c.font = `600 ${13 * PT * tw / vw}px ${SERIF}`;
+            c.fillText(b.v, tx, ty + 13 * PT * 1.05); ty += 13 * PT * 1.35;
+            c.font = `${7.5 * PT}px ${MONO}`; c.fillStyle = "#5b6b7c"; b.s.forEach(l => { c.fillText(l, tx, ty + 7.5 * PT); ty += 7.5 * PT * 1.35; });
+          });
+          y += rh + gap;
+        }
+      } else if(el.tagName === "TABLE"){
+        const fs = 7.8 * PT, hs = 7.5 * PT, padX = 4 * CP, rh = fs * 1.25 + 8 * CP;
+        const ths = [...el.querySelectorAll("thead th")], trs = [...el.querySelectorAll("tbody tr")];
+        const segs = td => [...td.childNodes].map(nd => ({ t: nd.textContent, b: nd.nodeName === "B" })).filter(sg => sg.t);
+        const segW = (sg, src) => sg.reduce((a, x) => { c.font = `${x.b ? "600 " : ""}${src ? 7.5 * PT : fs}px ${MONO}`; return a + c.measureText(x.t).width; }, 0);
+        const cols = ths.map((th, j) => {
+          c.font = `${hs}px ${MONO}`; LS(hs * .04);
+          const word = Math.max(...th.textContent.toUpperCase().split(/\s+/).map(w => c.measureText(w).width)); LS(0);
+          const body = Math.max(0, ...trs.map(tr => { const td = tr.children[j]; return td ? segW(segs(td), td.classList.contains("src")) : 0; }));
+          return { w: Math.max(word, body) + padX * 2, num: th.classList.contains("num") };
+        });
+        const extra = Math.max(0, W - cols.reduce((a, x) => a + x.w, 0)) / cols.length; cols.forEach(x => x.w += extra);
+        // En-tête du tableau (texte sur 2 lignes au plus)
+        const hl = ths.map((th, j) => { LS(hs * .04); const r = wrap(th.textContent.toUpperCase(), `${hs}px ${MONO}`, cols[j].w - padX * 2); LS(0); return r; });
+        const hh = Math.max(...hl.map(l => l.length)) * hs * 1.25 + 8 * CP;
+        let x = X0;
+        hl.forEach((ls, j) => { c.font = `${hs}px ${MONO}`; c.fillStyle = "#5b6b7c"; LS(hs * .04);
+          ls.forEach((l, k) => { const yy = y + hh - 4 * CP - (ls.length - 1 - k) * hs * 1.25; if(cols[j].num){ c.textAlign = "right"; c.fillText(l, x + cols[j].w - padX, yy); c.textAlign = "left"; } else c.fillText(l, x + padX, yy); });
+          LS(0); x += cols[j].w; });
+        y += hh; c.fillStyle = "#14202e"; c.fillRect(X0, y, W, 1.5 * CP); y += 1.5 * CP;
+        trs.forEach((tr, i) => {
+          if(i % 2 === 0){ c.fillStyle = "#f4f7fa"; c.fillRect(X0, y, W, rh); }
+          c.fillStyle = "#e3e9ef"; c.fillRect(X0, y + rh - CP, W, CP);
+          let xx = X0;
+          [...tr.children].forEach((td, j) => {
+            const src = td.classList.contains("src"), sg = segs(td), w = segW(sg, src);
+            let tx = cols[j].num ? xx + cols[j].w - padX - w : xx + padX;
+            sg.forEach(p => { c.font = `${p.b ? "600 " : ""}${src ? 7.5 * PT : fs}px ${MONO}`; c.fillStyle = src ? "#5b6b7c" : "#14202e"; c.fillText(p.t, tx, y + rh / 2 + fs * .35); tx += c.measureText(p.t).width; });
+            xx += cols[j].w;
+          });
+          y += rh;
+        });
+      } else if(el.classList.contains("pdf-foot")){
+        y += 10 * CP; const fs = 7 * PT;
+        lines(el).forEach(par => wrap(par, `${fs}px ${MONO}`, W).forEach(l => { c.font = `${fs}px ${MONO}`; c.fillStyle = "#8796a5"; c.fillText(l, X0, y + fs); y += fs * 1.5; }));
+      }
+    }
+  }
+
+  // Assemblage du PDF et aperçu
+  const jpgs = await Promise.all(pages.map(cv => new Promise(r => cv.toBlob(r, "image/jpeg", 0.9))));
+  const blob = await construirePDF(jpgs);
+  if(pdfURL) URL.revokeObjectURL(pdfURL); pdfImgs.forEach(u => URL.revokeObjectURL(u));
+  pdfURL = URL.createObjectURL(blob); pdfImgs = jpgs.map(b => URL.createObjectURL(b));
+  const safeName = currentCity.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9]+/g, "-");
+  const nomF = t("pdfFileName", safeName, startYear, endYear) + ".pdf";
+  const file = new File([blob], nomF, { type:"application/pdf" });
+  let share = false; try{ share = !!(navigator.canShare && navigator.canShare({ files:[file] })); }catch(e){}
+  document.getElementById("pdf-out").innerHTML =
+    `<div class="pdf-actions"><a class="btn btn-main" href="${pdfURL}" download="${escapeHtml(nomF)}">${escapeHtml(t("pdfDl"))}</a>` +
+    (share ? `<button class="btn" id="pdf-share">${escapeHtml(t("pdfShare"))}</button>` : "") +
+    `<button class="btn" id="pdf-close">${escapeHtml(t("pdfClose"))}</button>` +
+    `<span class="pdf-file">${escapeHtml(nomF)} · ${Math.round(blob.size / 1024)} ${t("pdfKb")}</span></div>` +
+    `<div class="pdf-pages">${pdfImgs.map((u, i) => `<img src="${u}" alt="page ${i + 1}">`).join("")}</div>`;
+  if(share) document.getElementById("pdf-share").onclick = () => navigator.share({ files:[file], title:t("pdfTitle") }).catch(() => {});
+  document.getElementById("pdf-close").onclick = () => { document.getElementById("pdf-panel").hidden = true; };
+}
+
+// Fichier PDF minimal : une image JPEG pleine page par page (A4)
+async function construirePDF(jpgs){
+  const enc = new TextEncoder(), parts = [], offs = []; let len = 0;
+  const add = x => { const b = typeof x === "string" ? enc.encode(x) : x; parts.push(b); len += b.length; };
+  const obj = async (n, body) => { offs[n] = len; add(`${n} 0 obj\n`); await body(); add("\nendobj\n"); };
+  add("%PDF-1.4\n"); add(new Uint8Array([37, 226, 227, 207, 211, 10]));
+  const n = jpgs.length, kids = [...Array(n)].map((_, i) => `${3 + i * 3} 0 R`).join(" ");
+  await obj(1, () => add("<< /Type /Catalog /Pages 2 0 R >>"));
+  await obj(2, () => add(`<< /Type /Pages /Kids [${kids}] /Count ${n} >>`));
+  for(let i = 0; i < n; i++){
+    const p = 3 + i * 3, cs = p + 1, im = p + 2, data = new Uint8Array(await jpgs[i].arrayBuffer());
+    const content = `q 595.28 0 0 841.89 0 0 cm /Im${i} Do Q`;
+    await obj(p, () => add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /XObject << /Im${i} ${im} 0 R >> >> /Contents ${cs} 0 R >>`));
+    await obj(cs, () => add(`<< /Length ${content.length} >>\nstream\n${content}\nendstream`));
+    await obj(im, () => { add(`<< /Type /XObject /Subtype /Image /Width ${PDF_W} /Height ${PDF_H} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${data.length} >>\nstream\n`); add(data); add("\nendstream"); });
+  }
+  const total = 3 + n * 3, xref = len;
+  let x = `xref\n0 ${total}\n0000000000 65535 f \n`;
+  for(let k = 1; k < total; k++) x += String(offs[k]).padStart(10, "0") + " 00000 n \n";
+  add(x); add(`trailer\n<< /Size ${total} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`);
+  return new Blob(parts, { type:"application/pdf" });
+}
 
 // ---------- Panneau "Fonctionnement du site" ----------
 const FEATURES_CONTENT = {
@@ -2459,7 +2667,7 @@ const FEATURES_CONTENT = {
         <h3>⚙️ Confort d'usage</h3>
         <ul>
           <li>FR/EN, °C/°F (préférences mémorisées), lien partageable (conserve le lieu, l'altitude et la période)</li>
-          <li><b>📄 Fiche PDF</b> : frise des 20 dernières saisons (1er août → 31 juillet) avec 1ère chute (≥3 cm), plus forte et dernière chute (≥1 cm) , jours de neige au sol et cumul des chutes, synthèse et tableau détaillé — choisir « Enregistrer au format PDF » dans la fenêtre d'impression</li>
+          <li><b>📄 Fiche PDF</b> : frise des 20 dernières saisons (1er août → 31 juillet) avec 1ère chute (≥3 cm), plus forte et dernière chute (≥1 cm) , jours de neige au sol et cumul des chutes, synthèse et tableau détaillé — après confirmation, la fiche (2 pages A4) s'affiche sous les boutons, prête à télécharger ou partager ; le logo de la commune est ajouté s'il est enregistré sur mairies-offres</li>
           <li class="f-dim">Les hauteurs de neige restent en cm et les altitudes en m</li>
         </ul>
       </div>
@@ -2502,7 +2710,7 @@ const FEATURES_CONTENT = {
         <h3>⚙️ Convenience</h3>
         <ul>
           <li>FR/EN, °C/°F (preferences remembered), shareable link (keeps the location, altitude and period)</li>
-          <li><b>📄 PDF sheet</b>: timeline of the last 20 seasons (Aug 1 → Jul 31) with first snowfall (≥3 cm), heaviest and last snowfall (≥1 cm) , snow-cover days and snowfall total, summary and detailed table — choose “Save as PDF” in the print dialog</li>
+          <li><b>📄 PDF sheet</b>: timeline of the last 20 seasons (Aug 1 → Jul 31) with first snowfall (≥3 cm), heaviest and last snowfall (≥1 cm) , snow-cover days and snowfall total, summary and detailed table — after confirmation, the sheet (2 A4 pages) appears below the buttons, ready to download or share; the town's logo is added when registered on mairies-offres</li>
           <li class="f-dim">Snow depths stay in cm and altitudes in m</li>
         </ul>
       </div>
