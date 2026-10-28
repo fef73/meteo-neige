@@ -571,6 +571,8 @@ html.fef73-locked #fef73-lock{display:flex;position:fixed;inset:0;z-index:214748
     .pdf-head h1{ font-family:'Fraunces', serif; font-style:italic; font-weight:600; font-size:20pt; margin:2px 0; }
     .pdf-meta{ font-family:'IBM Plex Mono', monospace; font-size:8pt; color:#5b6b7c; }
     .pdf-right{ text-align:right; white-space:nowrap; flex:none; }
+    .pdf-logo{ display:block; max-height:17mm; max-width:42mm; margin:0 0 4px auto; }
+    .pdf-mention{ font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:9pt; color:#1d4e7a; margin-top:2px; }
     #pdf-sheet h2{ font-family:'IBM Plex Mono', monospace; font-size:8.5pt; letter-spacing:.08em; text-transform:uppercase; color:#2f7fb5; margin:10px 0 4px; }
     .pdf-legend{ display:flex; flex-wrap:wrap; gap:4px 14px; font-family:'IBM Plex Mono', monospace; font-size:7.5pt; color:#5b6b7c; margin-top:4px; }
     .pdf-legend span{ display:flex; align-items:center; gap:4px; }
@@ -2129,6 +2131,26 @@ document.getElementById("share-btn").addEventListener("click", async () => {
   }
 });
 
+// ---------- Logo et mention de la commune (communes.json de mairies-offres, comme la page commune) ----------
+const OFFRES = "https://fef73.github.io/mairies-offres/";
+let COMMUNES = null;
+async function communeInfo(c){
+  try{
+    if(!/france/i.test(c.country || "")) return null;
+    const gj = async u => { const r = await fetch(u); if(!r.ok) throw new Error("HTTP " + r.status); return r.json(); };
+    const l = await gj(`https://geo.api.gouv.fr/communes?lat=${c.lat}&lon=${c.lon}&fields=code&format=json`);
+    if(!l.length) return null;
+    if(!COMMUNES) COMMUNES = await gj(OFFRES + "communes.json?v=" + Date.now()).catch(() => ({}));
+    const conf = COMMUNES[l[0].code] || {};
+    let logo = null;
+    if(conf.logo){
+      const src = /^(data:|https?:)/.test(conf.logo) ? conf.logo : OFFRES + conf.logo;
+      logo = await new Promise(ok => { const im = new Image(); im.onload = () => ok(src); im.onerror = () => ok(null); im.src = src; }); // préchargé : prêt pour l'impression
+    }
+    return { code: l[0].code, logo, mention: conf.mention && !/test/i.test(conf.mention) ? conf.mention : "" };
+  }catch(e){ return null; }
+}
+
 // ---------- Fiche PDF « 20 saisons » (frise saisonnière) ----------
 // Saison = 1er août → 31 juillet. Impression via window.print() : choisir « Enregistrer au format PDF ».
 const PDF_SEASONS = 20;
@@ -2257,7 +2279,7 @@ function buildSeasonChartSvg(seasons){
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="IBM Plex Mono, monospace">${g}</svg>`;
 }
 
-function buildPdfSheet(seasons, modelElevation, startYear, endYear){
+function buildPdfSheet(seasons, modelElevation, startYear, endYear, com){
   const ok = seasons.filter(s => s.nDays);
   const withFirst = ok.filter(s => s.first);
   const offs = (arr, k) => arr.map(s => seasonOffset(s[k].date, s.y));
@@ -2309,9 +2331,10 @@ function buildPdfSheet(seasons, modelElevation, startYear, endYear){
       <div>
         <div class="pdf-eyebrow">${escapeHtml(t("pdfTitle"))}</div>
         <h1>${escapeHtml(currentCity.name)}</h1>
+        ${com && com.mention ? `<div class="pdf-mention">${escapeHtml(com.mention)}</div>` : ""}
         <div class="pdf-meta">${escapeHtml([place, alt, `${currentCity.lat.toFixed(3)}°, ${currentCity.lon.toFixed(3)}°`].filter(Boolean).join(" · "))}</div>
       </div>
-      <div class="pdf-meta pdf-right">${escapeHtml(t("pdfSubtitle", seasonLabel(startYear), seasonLabel(endYear - 1)))}<br>${escapeHtml(t("pdfEdited", today))}</div>
+      <div class="pdf-meta pdf-right">${com && com.logo ? `<img class="pdf-logo" src="${escapeHtml(com.logo)}" alt="">` : ""}${escapeHtml(t("pdfSubtitle", seasonLabel(startYear), seasonLabel(endYear - 1)))}<br>${escapeHtml(t("pdfEdited", today))}</div>
     </div>`;
   const foot = `<div class="pdf-foot">${escapeHtml(t("pdfMethod", PDF_FIRST_CM, PDF_SNOW_CM, PDF_GROUND_CM))}${seasons.some(s => s.incomplete) ? "<br>" + escapeHtml(t("pdfIncomplete")) : ""}<br>fef73 · claude.ai · Open-Meteo (ERA5 / ERA5-Land)</div>`;
 
@@ -2373,6 +2396,7 @@ async function generatePdfSheet(){
     const elevationParam = (currentCity.elevation !== null && currentCity.elevation !== undefined && !isNaN(currentCity.elevation))
       ? `&elevation=${currentCity.elevation}` : "";
     const allDates = datesBetween(start, end);
+    const comP = communeInfo(currentCity);
     const { raw, modelElevation } = await fetchRawDays(allDates, elevationParam,
       (p, waitS) => { btn.textContent = waitS ? t("pdfWait", waitS) : t("pdfLoading", Math.round(p * 100)); },
       { strict: true });
@@ -2381,7 +2405,7 @@ async function generatePdfSheet(){
     if(missingDays > allDates.length * 0.05) throw new Error(t("pdfIncompleteData", missingDays));
     const seasons = computeSeasons(raw, startYear, endYear);
     if(!seasons.some(s => s.nDays)) throw new Error("no data");
-    buildPdfSheet(seasons, modelElevation, startYear, endYear);
+    buildPdfSheet(seasons, modelElevation, startYear, endYear, await comP);
     printPdfSheet(startYear, endYear);
   }catch(e){
     failed = true;
