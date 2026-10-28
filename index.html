@@ -2177,7 +2177,7 @@ async function communeInfo(c){
       const src = /^(data:|https?:)/.test(conf.logo) ? conf.logo : OFFRES + conf.logo;
       logo = await new Promise(ok => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => ok(src); im.onerror = () => ok(null); im.src = src; }); // préchargé en CORS : dessinable dans le canvas du PDF
     }
-    return { code, logo, mention: conf.mention && !/test/i.test(conf.mention) ? conf.mention : "" };
+    return { code, logo, mention: conf.mention || "" };
   }catch(e){ return null; }
 }
 
