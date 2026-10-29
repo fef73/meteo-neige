@@ -610,6 +610,9 @@ html.fef73-locked #fef73-lock{display:flex;position:fixed;inset:0;z-index:214748
     .pdf-table tbody tr:nth-child(odd){ background:#f4f7fa; }
     .pdf-table .num{ text-align:right; }
     .pdf-table .src{ color:#5b6b7c; font-size:7.5pt; }
+    .pdf-foot{ display:flex; justify-content:space-between; gap:14px; }
+    .pdf-foot .fr{ text-align:right; flex:none; max-width:38%; }
+    .pdf-foot .fr b{ color:#14202e; font-weight:700; }
     .pdf-foot{ margin-top:10px; font-family:'IBM Plex Mono', monospace; font-size:7pt; color:#8796a5; line-height:1.5; }
   </style>
   <footer>
@@ -707,6 +710,8 @@ const TRANSLATIONS = {
     pdfTitle: "Fiche neige — 20 saisons",
     pdfSubtitle: (a, b) => `Saisons ${a} à ${b} (1er août → 31 juillet)`,
     pdfEdited: (d) => `Édité le ${d}`,
+    pdfSources: (a, b, lat, lon, alt, d, h) => `Sources : réanalyse ERA5 / ERA5-Land (Copernicus / ECMWF) via Open-Meteo, saisons ${a} à ${b}. Valeurs modélisées au point ${lat}° N, ${lon}° E${alt} : elles peuvent différer des mesures d'une station. Fiche établie le ${d} à ${h}.`,
+    pdfDisclaimer: "Document informatif : ne remplace pas la vigilance Météo-France.",
     pdfAltitudeSet: (m) => `altitude ${m} m (précisée)`,
     pdfAltitudeModel: (m) => `altitude ${m} m (modèle)`,
     pdfChartTitle: "Frise des saisons",
@@ -870,6 +875,8 @@ const TRANSLATIONS = {
     pdfTitle: "Snow sheet — 20 seasons",
     pdfSubtitle: (a, b) => `Seasons ${a} to ${b} (Aug 1 → Jul 31)`,
     pdfEdited: (d) => `Issued on ${d}`,
+    pdfSources: (a, b, lat, lon, alt, d, h) => `Sources: ERA5 / ERA5-Land reanalysis (Copernicus / ECMWF) via Open-Meteo, seasons ${a} to ${b}. Modelled values at ${lat}° N, ${lon}° E${alt}: they may differ from station measurements. Issued on ${d} at ${h}.`,
+    pdfDisclaimer: "For information only: does not replace Météo-France warnings.",
     pdfAltitudeSet: (m) => `altitude ${m} m (set)`,
     pdfAltitudeModel: (m) => `altitude ${m} m (model)`,
     pdfChartTitle: "Season timeline",
@@ -2366,7 +2373,10 @@ function buildPdfSheet(seasons, modelElevation, startYear, endYear, com){
       </div>
       <div class="pdf-meta pdf-right">${com && com.logo ? `<img class="pdf-logo" crossorigin="anonymous" src="${escapeHtml(com.logo)}" alt="">` : ""}${escapeHtml(t("pdfSubtitle", seasonLabel(startYear), seasonLabel(endYear - 1)))}<br>${escapeHtml(t("pdfEdited", today))}</div>
     </div>`;
-  const foot = `<div class="pdf-foot">${escapeHtml(t("pdfMethod", PDF_FIRST_CM, PDF_SNOW_CM, PDF_GROUND_CM))}${seasons.some(s => s.incomplete) ? "<br>" + escapeHtml(t("pdfIncomplete")) : ""}<br>fef73 · claude.ai · Open-Meteo (ERA5 / ERA5-Land)</div>`;
+  const elevN = (currentCity.elevation !== null && currentCity.elevation !== undefined && !isNaN(currentCity.elevation)) ? currentCity.elevation : modelElevation;
+  const nowD = new Date(), nowH = nowD.toLocaleTimeString(lang === "en" ? "en-GB" : "fr-FR", { hour:"2-digit", minute:"2-digit" });
+  const srcTxt = t("pdfSources", seasonLabel(startYear), seasonLabel(endYear - 1), currentCity.lat.toFixed(3), currentCity.lon.toFixed(3), elevN != null ? ` ${lang === "en" ? "at" : "à"} ${Math.round(elevN)} m` : "", today, nowH);
+  const foot = `<div class="pdf-foot"><div class="fl">${escapeHtml(t("pdfMethod", PDF_FIRST_CM, PDF_SNOW_CM, PDF_GROUND_CM))}${seasons.some(s => s.incomplete) ? "<br>" + escapeHtml(t("pdfIncomplete")) : ""}<br>${escapeHtml(srcTxt)}</div><div class="fr">${com && com.mention ? `<b>${escapeHtml(com.mention)}</b><br>` : ""}${escapeHtml(t("pdfDisclaimer"))}<br>© ${nowD.getFullYear()} fef73</div></div>`;
 
   document.getElementById("pdf-sheet").innerHTML = `
     <section class="pdf-page">
@@ -2584,8 +2594,16 @@ async function renderPdfFromSheet(startYear, endYear){
           y += rh;
         });
       } else if(el.classList.contains("pdf-foot")){
-        y += 10 * CP; const fs = 7 * PT;
-        lines(el).forEach(par => wrap(par, `${fs}px ${MONO}`, W).forEach(l => { c.font = `${fs}px ${MONO}`; c.fillStyle = "#8796a5"; c.fillText(l, X0, y + fs); y += fs * 1.5; }));
+        const fs = 7 * PT, fl = el.querySelector(".fl"), fr = el.querySelector(".fr");
+        const LWf = W * 0.60, RW = W * 0.36;
+        const L = lines(fl).flatMap(par => wrap(par, `${fs}px ${MONO}`, LWf));
+        const R = lines(fr).flatMap(par => wrap(par, `${fs}px ${MONO}`, RW));
+        const hgt = Math.max(L.length, R.length) * fs * 1.5;
+        y = Math.max(y + 10 * CP, PDF_H - 11 * MM - hgt);   // collé en bas de page
+        let ly2 = y; L.forEach(l => { c.font = `${fs}px ${MONO}`; c.fillStyle = "#8796a5"; c.textAlign = "left"; c.fillText(l, X0, ly2 + fs); ly2 += fs * 1.5; });
+        let ry2 = y; const mn = fr.querySelector("b") ? fr.querySelector("b").textContent.replace(/\s+/g, " ").trim() : "";
+        R.forEach(l => { const bold = !!mn && mn.includes(l.trim()); c.font = `${bold ? "700 " : ""}${fs}px ${MONO}`; c.fillStyle = bold ? "#14202e" : "#8796a5"; c.textAlign = "right"; c.fillText(l, X1, ry2 + fs); ry2 += fs * 1.5; });
+        c.textAlign = "left"; y += hgt;
       }
     }
   }
