@@ -619,9 +619,8 @@ html.fef73-locked #fef73-lock{display:flex;position:fixed;inset:0;z-index:214748
     <span id="footer-source-line">Source : archives climatiques Open-Meteo (ERA5, géocodage sans clé API) · Fuseau horaire local à la ville<br>
     Le lien partagé conserve ta ville et ta période</span>
     <div class="tip" id="footer-tip">
-      💡 Astuce — <b>« Neige au sol restante »</b> tient compte de la fonte : quand une mesure ERA5-Land
-      de hauteur de neige est disponible pour la zone, elle est utilisée directement ; sinon un modèle simplifié
-      « degré-jour » est appliqué (la neige accumulée fond dès que la température maximale du jour dépasse 0°C).
+      💡 Astuce — <b>« Neige au sol restante »</b> tient compte de la fonte : un modèle simplifié
+      « degré-jour » est appliqué aux chutes de neige de l'altitude choisie (la neige accumulée fond dès que la température maximale du jour dépasse 0°C).
       C'est donc une estimation, pas une mesure au centimètre près. Les données récentes sont aussi consolidées
       avec quelques jours de délai (source ERA5). Le bouton <b>⛰ Altitude</b> reste essentiel : la neige tient
       rarement à l'altitude par défaut d'une ville de vallée — précise l'altitude d'une station ou d'un sommet
@@ -779,7 +778,7 @@ const TRANSLATIONS = {
     axisFreezing: "Isotherme 0°C (m)",
     footerSource: "Source : archives climatiques Open-Meteo (ERA5, géocodage sans clé API) · Fuseau horaire local à la ville",
     footerShareNote: "Le lien partagé conserve ta ville et ta période",
-    footerTip: "💡 Astuce — <b>« Neige au sol restante »</b> tient compte de la fonte : quand une mesure ERA5-Land de hauteur de neige est disponible pour la zone, elle est utilisée directement ; sinon un modèle simplifié « degré-jour » est appliqué (la neige accumulée fond dès que la température maximale du jour dépasse 0°C). C'est donc une estimation, pas une mesure au centimètre près. Les données récentes sont aussi consolidées avec quelques jours de délai (source ERA5). Le bouton <b>⛰ Altitude</b> reste essentiel : la neige tient rarement à l'altitude par défaut d'une ville de vallée — précise l'altitude d'une station ou d'un sommet pour recalculer chutes et fonte à ce point précis.",
+    footerTip: "💡 Astuce — <b>« Neige au sol restante »</b> tient compte de la fonte : un modèle simplifié « degré-jour » est appliqué aux chutes de neige de l'altitude choisie (la neige accumulée fond dès que la température maximale du jour dépasse 0°C). C'est donc une estimation, pas une mesure au centimètre près. Les données récentes sont aussi consolidées avec quelques jours de délai (source ERA5). Le bouton <b>⛰ Altitude</b> reste essentiel : la neige tient rarement à l'altitude par défaut d'une ville de vallée — précise l'altitude d'une station ou d'un sommet pour recalculer chutes et fonte à ce point précis.",
     // Cartes
     cardRemaining: "Neige au sol restante (fin de période)",
     srcMeasured: "mesure ERA5-Land",
@@ -944,7 +943,7 @@ const TRANSLATIONS = {
     axisFreezing: "0°C isotherm (m)",
     footerSource: "Source: Open-Meteo climate archive (ERA5, keyless geocoding) · Local time zone of the location",
     footerShareNote: "The shared link keeps your location and period",
-    footerTip: "💡 Tip — <b>“Snow remaining on the ground”</b> accounts for melting: when an ERA5-Land snow depth measurement is available for the area it is used directly; otherwise a simplified “degree-day” model is applied (accumulated snow melts as soon as the daily maximum exceeds 0°C). It is therefore an estimate, not a centimetre-accurate measurement. Recent data is also consolidated with a few days' delay (ERA5 source). The <b>⛰ Altitude</b> button is essential: snow rarely lasts at the default altitude of a valley town — set the altitude of a resort or summit to recompute snowfall and melting at that exact point.",
+    footerTip: "💡 Tip — <b>“Snow remaining on the ground”</b> accounts for melting: a simplified “degree-day” model is applied to the snowfall at the chosen altitude (accumulated snow melts as soon as the daily maximum exceeds 0°C). It is therefore an estimate, not a centimetre-accurate measurement. Recent data is also consolidated with a few days' delay (ERA5 source). The <b>⛰ Altitude</b> button is essential: snow rarely lasts at the default altitude of a valley town — set the altitude of a resort or summit to recompute snowfall and melting at that exact point.",
     cardRemaining: "Snow remaining on the ground (end of period)",
     srcMeasured: "ERA5-Land measurement",
     srcEstimated: "estimate (degree-day model, melting once max T° > 0°C)",
@@ -1762,7 +1761,8 @@ async function loadAndRender(){
 
     const depthSamples = dates.filter(d => raw[d].depth !== null && raw[d].depth !== undefined).length;
     const coverage = depthSamples / dates.length;
-    const useMeasuredDepth = depthSamples > 0 && coverage >= 0.8;
+    // Toujours le modèle degré-jour : la hauteur ERA5-Land n'est pas corrigée de l'altitude (case de grille d'environ 9 km) et surestime la neige en vallée.
+    const useMeasuredDepth = false;
 
     // Isotherme 0°C : altitude (m) à laquelle la température atteint 0°C.
     // L'archive climatique ne renvoie pas toujours ce champ pour les dates
@@ -2672,7 +2672,7 @@ const FEATURES_CONTENT = {
         <h3>📈 Graphique</h3>
         <ul>
           <li><b>Neige du jour</b> (cm) et <b>neige au sol restante</b> (cm), après fonte</li>
-          <li>Neige au sol : mesure ERA5-Land quand elle couvre au moins 80 % de la période, sinon estimation « degré-jour » (1,4 cm fondu par °C au-dessus de 0°C de température maximale, par jour)</li>
+          <li>Neige au sol : estimation « degré-jour » à partir des chutes à l'altitude choisie (1,4 cm fondu par °C au-dessus de 0°C de température maximale, par jour)</li>
           <li>Températures maximale et minimale, avec la référence 0°C</li>
           <li>Isotherme 0°C (mesurée ou estimée) et altitude du lieu : au-dessus de l'isotherme, les précipitations tombent en neige</li>
           <li>Clic sur la légende pour masquer/afficher une courbe</li>
@@ -2715,7 +2715,7 @@ const FEATURES_CONTENT = {
         <h3>📈 Chart</h3>
         <ul>
           <li><b>Daily snowfall</b> (cm) and <b>snow remaining on the ground</b> (cm), after melting</li>
-          <li>Snow on the ground: ERA5-Land measurement when it covers at least 80% of the period, otherwise a “degree-day” estimate (1.4 cm melted per °C of daily maximum above 0°C)</li>
+          <li>Snow on the ground: “degree-day” estimate from the snowfall at the chosen altitude (1.4 cm melted per °C of daily maximum above 0°C)</li>
           <li>Maximum and minimum temperatures, with the 0°C reference</li>
           <li>0°C isotherm (measured or estimated) and location altitude: above the isotherm, precipitation falls as snow</li>
           <li>Click the legend to show/hide a line</li>

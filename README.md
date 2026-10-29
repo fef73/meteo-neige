@@ -22,8 +22,8 @@ Site : https://fef73.github.io/meteo-neige/ — accessible aussi depuis le lance
 
 - **Neige du jour** (barres, cm) : cumul de neige quotidien (`snowfall_sum`).
 - **Neige au sol restante** (barres, cm), après fonte :
-  - mesure ERA5-Land de hauteur de neige (`snow_depth`, dernière valeur de la journée) quand elle couvre au moins 80 % de la période ;
-  - sinon estimation « degré-jour » : la neige s'accumule avec les chutes et fond de 1,4 cm par °C de température maximale au-dessus de 0 °C, chaque jour.
+  - estimation « degré-jour » : la neige s'accumule avec les chutes (calculées à l'altitude choisie) et fond de 1,4 cm par °C de température maximale au-dessus de 0 °C, chaque jour ;
+  - la hauteur de neige mesurée ERA5-Land (`snow_depth`) n'est plus utilisée : elle n'est pas corrigée de l'altitude (case de grille d'environ 9 km) et surestimait fortement la neige au sol en vallée.
 - Températures maximale et minimale, avec la ligne de référence 0 °C.
 - **Isotherme 0 °C** (m) : mesure horaire ERA5 quand disponible, sinon estimation par le gradient standard (0,65 °C / 100 m) ; comparée à l'altitude du lieu (au-dessus de l'isotherme, les précipitations tombent en neige).
 - Clic sur la légende pour masquer/afficher une courbe.
