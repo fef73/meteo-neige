@@ -744,7 +744,7 @@ const TRANSLATIONS = {
     thDuration: "Durée des chutes", thGround: "Jours au sol", thTotal: "Cumul", thSource: "Neige au sol",
     srcMeasuredShort: "mesure", srcEstimatedShort: "estimation",
     pdfIncomplete: "* saison incomplète (plus de 10 % de jours sans données)",
-    pdfMethod: (f, s, g) => `1ère chute : ≥ ${f} cm en une journée. Plus forte et dernière chute : ≥ ${s} cm. Jour de neige au sol : hauteur ≥ ${g} cm — mesure ERA5-Land quand elle couvre ≥ 80 % de la saison, sinon modèle degré-jour (estimation). Durée des chutes = de la 1ère à la dernière chute (la neige au sol peut durer plus longtemps).`,
+    pdfMethod: (f, s, g) => `1ère chute : ≥ ${f} cm en une journée. Plus forte et dernière chute : ≥ ${s} cm. Jour de neige au sol : hauteur estimée ≥ ${g} cm (chutes cumulées moins la fonte, modèle degré-jour à l'altitude de la fiche). Durée des chutes = de la 1ère à la dernière chute (la neige au sol peut durer plus longtemps).`,
     pdfFileName: (c, a, b) => `Fiche-neige_${c}_${a}-${b}`,
     pdfAsk: (n, alt, a, b) => `Générer la <b>fiche neige — 20 saisons</b> de <b>${n}</b> · ${alt} · saisons ${a} à ${b} ?<br><span style="color:var(--text-lo);font-size:12.5px">Le chargement de 20 ans de données peut prendre jusqu'à une minute. La fiche s'affichera ici, prête à télécharger.</span>`,
     pdfAskAltAuto: "altitude du terrain",
@@ -909,7 +909,7 @@ const TRANSLATIONS = {
     thDuration: "Snowfall span", thGround: "Snow-cover days", thTotal: "Total", thSource: "Snow cover",
     srcMeasuredShort: "measured", srcEstimatedShort: "estimated",
     pdfIncomplete: "* incomplete season (more than 10% of days without data)",
-    pdfMethod: (f, s, g) => `First snowfall: ≥ ${f} cm in one day. Heaviest and last snowfall: ≥ ${s} cm. Snow-cover day: depth ≥ ${g} cm — ERA5-Land measurement when it covers ≥ 80% of the season, otherwise degree-day model (estimate). Snowfall span = from first to last snowfall (snow cover can last longer).`,
+    pdfMethod: (f, s, g) => `First snowfall: ≥ ${f} cm in one day. Heaviest and last snowfall: ≥ ${s} cm. Snow-cover day: estimated depth ≥ ${g} cm (accumulated snowfall minus melt, degree-day model at the sheet's altitude). Snowfall span = from first to last snowfall (snow cover can last longer).`,
     pdfFileName: (c, a, b) => `Snow-sheet_${c}_${a}-${b}`,
     pdfAsk: (n, alt, a, b) => `Generate the <b>snow sheet — 20 seasons</b> for <b>${n}</b> · ${alt} · seasons ${a} to ${b}?<br><span style="color:var(--text-lo);font-size:12.5px">Loading 20 years of data can take up to a minute. The sheet will be shown here, ready to download.</span>`,
     pdfAskAltAuto: "terrain elevation",
@@ -2223,7 +2223,9 @@ function computeSeasons(raw, startYear, endYear){
     const days = datesBetween(`${y}-08-01`, `${y + 1}-07-31`);
     const avail = days.filter(d => raw[d] && raw[d].snow !== null && raw[d].snow !== undefined);
     const depthN = avail.filter(d => raw[d].depth !== null && raw[d].depth !== undefined).length;
-    const measured = avail.length > 0 && depthN / avail.length >= 0.8;
+    // Neige au sol : toujours le modèle degré-jour (chutes à l'altitude choisie moins la fonte). La hauteur ERA5-Land n'est pas corrigée de l'altitude
+    // (case de grille d'environ 9 km) : elle surestimait fortement les jours de neige au sol en vallée.
+    const measured = false;
     let pack = 0, lastMeasured = 0, ground = 0, snowTotal = 0, first = null, last = null, max = null;
     avail.forEach(d => {
       const r = raw[d], snow = r.snow || 0;
